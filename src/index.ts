@@ -57,10 +57,9 @@ function getAmountOutInternal(amountIn, reserveIn, reserveOut, stable): number {
     return y;
   }
 
-  console.log("amountIn", amountIn);
-  console.log("reserveOut", reserveOut);
-  console.log("reserveIn", reserveIn);
-  console.log("amountIn", amountIn);
+  // console.log("amountIn", amountIn);
+  // console.log("reserveOut", reserveOut);
+  // console.log("reserveIn", reserveIn);
   return (amountIn * reserveOut) / (reserveIn + amountIn);
 }
 
@@ -75,28 +74,20 @@ const getPrice = (amountIn, amountOut) => {
 
 // TODO: write tests for it
 // NOTE: priceLimit is a ratio between amountIn and amountOut
-function maxInBeforePriceLimit(
-  priceLimit,
-  reserveIn,
-  reserveOut,
-  divisor = 100000000,
-  iterations = 10
-) {
+function maxInBeforePriceLimit(priceLimit, reserveIn, reserveOut, stable) {
   let foundMax = 2 ** 256 - 1;
   let foundMin = 0;
-  for (let i = 0; i < iterations; i++) {
-    const res = maxInBeforePriceLimitIteration(
-      priceLimit,
-      reserveIn,
-      reserveOut,
-      divisor,
-      foundMax,
-      foundMin
-    );
+  const res = maxInBeforePriceLimitIteration(
+    priceLimit,
+    reserveIn,
+    reserveOut,
+    stable,
+    foundMax,
+    foundMin
+  );
 
-    foundMax = res.max;
-    foundMin = res.min;
-  }
+  foundMax = res.max;
+  foundMin = res.min;
 
   return foundMin;
 }
@@ -105,7 +96,7 @@ function maxInBeforePriceLimitIteration(
   priceLimit,
   reserveIn,
   reserveOut,
-  divisor,
+  stable,
   max,
   min
 ) {
@@ -114,38 +105,54 @@ function maxInBeforePriceLimitIteration(
     throw Error("ya ya ya ya ya");
   }
 
-  const stepSize = (max - min) / divisor;
-  console.log("max", max);
-  console.log("min", min);
-  console.log("divisor", divisor);
-  if (Number.isNaN(stepSize)) {
-    console.log("stepSize");
-  }
-
   // TODO: Binary search if you want optimal
-  for (let i = 0; i < divisor; i++) {
-    const amountIn = min + stepSize * i;
-    console.log("amountIn", amountIn);
+  let tempMin = min;
+  let tempMax = max;
+  let counter = 0;
+
+  while (tempMin < tempMax) {
+    console.log("tempMin", tempMin);
+    console.log("tempMax", tempMax);
+    counter++;
+    if (counter > 1000) {
+      throw Error("DONE");
+    }
+
+    const delta = (tempMax - tempMin) / 2;
+    console.log("delta", delta);
+    const logDelta = Math.log2(tempMax - tempMin);
+    console.log("logDelta", logDelta);
+    console.log("logDelta 2", 2 ** (logDelta / 2));
+    // const amountIn = tempMin + 2 ** (logDelta / 2);
+    const amountIn = tempMin + delta;
     if (Number.isNaN(amountIn)) {
-      console.log("AmountIN NAN");
+      throw Error("AmountIN NAN");
     }
     const amountOut = getAmountOutInternal(
       amountIn,
       reserveIn,
       reserveOut,
-      false
+      stable
     );
 
     // Check if price is too high
     const spotPrice = getPrice(amountIn, amountOut);
-    if (spotPrice > priceLimit) {
-      console.log("FOUND");
-      return {
-        min: min + stepSize * (i - 1), // NOTE: We throw on odd values, check if issue in prod
-        max: amountIn,
-      };
+
+    if (amountIn == tempMin || amountIn == tempMax) {
+      break; // We have reached a loop
+    }
+
+    if (spotPrice <= priceLimit) {
+      tempMin = amountIn;
+    } else {
+      tempMax = amountIn;
     }
   }
+
+  return {
+    min: tempMin,
+    max: tempMax,
+  };
 }
 
 /**
@@ -164,17 +171,22 @@ function maxInBeforePriceLimitIteration(
 
 const USDC_RESERVE = 3403973201396;
 const WETH_RESERVE = 1859798333449789481797;
+const testAmountIn = 10 ** 6;
 
 console.log(
   "getAmountOutInternal(12000000000, 1859798333449789481797, 3403973201396, false)",
-  getAmountOut(12000000000, USDC_RESERVE, WETH_RESERVE, false)
+  getAmountOut(testAmountIn, USDC_RESERVE, WETH_RESERVE, false)
 );
 
 console.log(
   "maxInBeforePriceLimit",
   maxInBeforePriceLimit(
-    getAmountOut(12000000000, USDC_RESERVE, WETH_RESERVE, false) / 1.1, // 10% Increase of price,
+    getPrice(
+      testAmountIn,
+      getAmountOut(testAmountIn, USDC_RESERVE, WETH_RESERVE, false)
+    ) / 0.9, // 10% Increase of price, // You need to divide by 100 - PERCENT_IMPACT to get the accurate value
     USDC_RESERVE,
-    WETH_RESERVE
+    WETH_RESERVE,
+    false
   )
 );
