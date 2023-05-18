@@ -10,6 +10,7 @@
   "main": "lib/index.js",
   "license": "MIT",
   "scripts": {
+    "bal": "ts-node src/balancer.ts",
     "start": "ts-node src/index.ts",
     "build": "tsc",
     "test": "jest",
@@ -18,6 +19,7 @@
     "doc": "tsc && jsdoc -c ./.jsdoc.json"
   },
   "dependencies": {
+    "bignumber.js": "^9.1.1",
     "ts-node": "^10.9.1"
   },
   "devDependencies": {
