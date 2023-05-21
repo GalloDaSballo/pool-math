@@ -76,10 +76,13 @@ const maxStEthBeforeImpact = maxInBeforePriceLimit(
 console.log("Found Bal Max", maxStEthBeforeImpact);
 const amtWETH = balancerRateProvidedAmountOutFunction(maxStEthBeforeImpact);
 console.log("Whi results in  amtWETH,", amtWETH);
-// NOTE: This looks off
+// NOTE: This looks off, mostly because Beets website will not allow any slippage
+// TODO: Test vs Code
 
-const USDC_RESERVE = 3522525561456;
-const WETH_RESERVE = 1947911204797905328312;
+/** VELODROME */
+
+const USDC_RESERVE = 3524722936840;
+const WETH_RESERVE = 1946696842079975062335;
 const testAmountIn = 10 ** 6;
 
 const veloAmountOutFunction = (amountIn) => {
@@ -93,12 +96,12 @@ console.log(
   veloOut
 );
 
-// const veloPriceOut = getPrice(testAmountIn, veloOut);
+const veloPriceOut = getPrice(testAmountIn, veloOut);
 
-// const maxUSDCInBeforePriceChange = maxInBeforePriceLimit(
-//   veloPriceOut / 0.95,
-//   veloAmountOutFunction
-// );
-// console.log("Found Velo Max", maxUSDCInBeforePriceChange);
-// const veloWethOut = veloAmountOutFunction(maxUSDCInBeforePriceChange);
-// console.log("Whi results in  veloWethOut,", veloWethOut);
+const maxUSDCInBeforePriceChange = maxInBeforePriceLimit(
+  veloPriceOut / 0.95,
+  veloAmountOutFunction
+);
+console.log("Found Velo Max", maxUSDCInBeforePriceChange);
+const veloWethOut = veloAmountOutFunction(maxUSDCInBeforePriceChange);
+console.log("Whi results in  veloWethOut,", veloWethOut);

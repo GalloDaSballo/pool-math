@@ -2,6 +2,11 @@ export const getPrice = (amountIn, amountOut) => {
   return amountIn / amountOut;
 };
 
+// Loop where amount is i * delta_frac
+// Binary Search
+// Redo this N times (I think 9 or 10) for higher accuracy // 128 ^ 9 => 1e18 // 128 ^ 10 => 1e21
+// Or stop early if value is 1
+
 function maxInBeforePriceLimitIteration(
   priceLimit,
   getAmountOutFunction, // We want to receive this as a function so we can make it re-usable
