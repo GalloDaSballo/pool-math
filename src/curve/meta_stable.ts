@@ -367,11 +367,7 @@ function get_dy_underlying(i, j, dx, balances) {
     throw Error("NOT IMPLEMENTED");
   } else {
     // TODO: We need to impleemnt the withdraw one coin for base pool
-    // f
-    dy = Curve(BASE_POOL).calc_withdraw_one_coin(
-      (dy * PRECISION) / rates[1],
-      base_j
-    );
+    dy = calc_withdraw_one_coin((dy * PRECISION) / rates[1], base_j);
   }
 
   return dy;
@@ -469,3 +465,176 @@ export function getAmountOut(
 // getAmountOut
 // Is it for the extraToken -> Still need base pool
 // Is it for the rest of the tokens? -> Always need basePool [extra, [BASE_POOL]], [rates, [BASE_POOL_RATES]]
+
+/**
+ * 
+ * def _calc_withdraw_one_coin(_burn_amount: uint256, i: int128) -> uint256[2]:
+    # First, need to calculate
+    # * Get current D
+    # * Solve Eqn against y_i for D - _token_amount
+    amp: uint256 = self._A()
+    rates: uint256[N_COINS] = RATE_MULTIPLIERS
+    xp: uint256[N_COINS] = self._xp_mem(self.balances)
+    D0: uint256 = self.get_D(xp, amp)
+
+    total_supply: uint256 = self.totalSupply
+    D1: uint256 = D0 - _burn_amount * D0 / total_supply
+    new_y: uint256 = self.get_y_D(amp, i, xp, D1)
+
+    base_fee: uint256 = self.fee * N_COINS / (4 * (N_COINS - 1))
+    xp_reduced: uint256[N_COINS] = empty(uint256[N_COINS])
+
+    for j in range(N_COINS):
+        dx_expected: uint256 = 0
+        xp_j: uint256 = xp[j]
+        if j == i:
+            dx_expected = xp_j * D1 / D0 - new_y
+        else:
+            dx_expected = xp_j - xp_j * D1 / D0
+        xp_reduced[j] = xp_j - base_fee * dx_expected / FEE_DENOMINATOR
+
+    dy: uint256 = xp_reduced[i] - self.get_y_D(amp, i, xp_reduced, D1)
+    dy_0: uint256 = (xp[i] - new_y) * PRECISION / rates[i]  # w/o fees
+    dy = (dy - 1) * PRECISION / rates[i]  # Withdraw less to account for rounding errors
+
+    return [dy, dy_0 - dy]
+
+ */
+
+// NOTE: Called as
+// dy = Curve(BASE_POOL).calc_withdraw_one_coin(dy * PRECISION / rates[1], base_j)
+
+function _calc_withdraw_one_coin(
+  _burn_amount,
+  i,
+  // TODO: We can just default to three pool here
+  rates = [], // Default to three_pool
+  balances = [], // Default to three pool
+  total_supply,
+  fee
+) {
+  const amp = A;
+  // const rates = RATE_MULTIPLIERS // rates
+  const xp = _xp_mem(balances);
+
+  // TODO: Needs coins because we are going to read from global and it will be a mess
+  const D0 = get_D(xp, amp);
+
+  // total_supply: uint256 = self.totalSupply
+  const D1 = D0 - (_burn_amount * D0) / total_supply;
+
+  // new_y: uint256 = self.get_y_D(amp, i, xp, D1)
+  const new_y = get_y_D(amp, i, xp, D1);
+
+  // base_fee: uint256 = self.fee * N_COINS / (4 * (N_COINS - 1))
+  // xp_reduced: uint256[N_COINS] = empty(uint256[N_COINS])
+  const base_fee = (fee * N_COINS) / (4 * (N_COINS - 1));
+  const xp_reduced = [];
+
+  // for j in range(N_COINS):
+  //     dx_expected: uint256 = 0
+  //     xp_j: uint256 = xp[j]
+  //     if j == i:
+  //         dx_expected = xp_j * D1 / D0 - new_y
+  //     else:
+  //         dx_expected = xp_j - xp_j * D1 / D0
+  //     xp_reduced[j] = xp_j - base_fee * dx_expected / FEE_DENOMINATOR
+
+  for (let j = 0; j < N_COINS; j++) {
+    let dx_expected = 0;
+    const xp_j = xp[j];
+
+    if (j == i) {
+      dx_expected = (xp_j * D1) / D0 - new_y;
+    } else {
+      dx_expected = xp_j - (xp_j * D1) / D0;
+    }
+    xp_reduced[j] = xp_j - (base_fee * dx_expected) / FEE_DENOMINATOR;
+  }
+
+  // dy: uint256 = xp_reduced[i] - self.get_y_D(amp, i, xp_reduced, D1)
+  let dy = xp_reduced[i] - get_y_D(amp, i, xp_reduced, D1);
+
+  // dy_0: uint256 = (xp[i] - new_y) * PRECISION / rates[i]  # w/o fees
+  const dy_0 = ((xp[i] - new_y) * PRECISION) / rates[i];
+
+  // dy = (dy - 1) * PRECISION / rates[i]  # Withdraw less to account for rounding errors
+  dy = ((dy - 1) * PRECISION) / rates[i];
+  // return [dy, dy_0 - dy]
+
+  return [dy, dy_0 - dy];
+}
+
+function get_y_D(A, i, xp, D) {
+  // assert i >= 0  # dev: i below zero
+  // assert i < N_COINS  # dev: i above N_COINS
+  if (i < 0) {
+    throw Error("I >= 0");
+  }
+
+  if (i > N_COINS) {
+    throw Error("i < N_COINS");
+  }
+
+  // S_: uint256 = 0
+  // _x: uint256 = 0
+  // y_prev: uint256 = 0
+  // c: uint256 = D
+  // Ann: uint256 = A * N_COINS
+
+  let S_ = 0;
+  let _x = 0;
+  let y_prev = 0;
+  let c = D;
+  const Ann = A * N_COINS;
+
+  // for _i in range(N_COINS):
+  //       if _i != i:
+  //           _x = xp[_i]
+  //       else:
+  //           continue
+  //       S_ += _x
+  //       c = c * D / (_x * N_COINS)
+
+  for (let _i = 0; _i < N_COINS; _i++) {
+    if (_i != i) {
+      _x = xp[_i];
+    } else {
+      continue;
+    }
+
+    S_ += _x;
+    c = (c * D) / (_x * N_COINS);
+  }
+
+  // c = c * D * A_PRECISION / (Ann * N_COINS)
+  // b: uint256 = S_ + D * A_PRECISION / Ann
+  // y: uint256 = D
+  c = (c * D * A_PRECISION) / (Ann * N_COINS);
+  const b = S_ + (D * A_PRECISION) / Ann;
+  let y = D;
+
+  for (let _i = 0; _i < 255; _i++) {
+    y_prev = y;
+    y = (y * y + c) / (2 * y + b - D);
+
+    // NOTE: IN TS we have more margin for error
+    if (Math.abs(y - y_prev) < MARGIN_OF_ERROR_FOR_CONVERGENCE) {
+      return y;
+    }
+  }
+
+  // for _i in range(255):
+  //       y_prev = y
+  //       y = (y*y + c) / (2 * y + b - D)
+  //       # Equality with the precision of 1
+  //       if y > y_prev:
+  //           if y - y_prev <= 1:
+  //               return y
+  //       else:
+  //           if y_prev - y <= 1:
+  //               return y
+  // raise
+
+  throw "get_y_D Did not converge";
+}

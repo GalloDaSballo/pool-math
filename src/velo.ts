@@ -44,7 +44,7 @@ function get_y(x0: number, xy: number, y: number): number {
   return y;
 }
 
-function getAmountOut(amountIn, reserveIn, reserveOut, stable): number {
+export function getAmountOut(amountIn, reserveIn, reserveOut, stable): number {
   const updatedAmountIn = amountIn - (amountIn * VELO_FEES) / MAX_BPS;
   return getAmountOutInternal(updatedAmountIn, reserveIn, reserveOut, stable);
 }
@@ -173,20 +173,21 @@ const USDC_RESERVE = 3403973201396;
 const WETH_RESERVE = 1859798333449789481797;
 const testAmountIn = 10 ** 6;
 
-console.log(
-  "getAmountOutInternal(12000000000, 1859798333449789481797, 3403973201396, false)",
-  getAmountOut(testAmountIn, USDC_RESERVE, WETH_RESERVE, false)
-);
+// TODO: DEPRECATE - OLD
+// console.log(
+//   "getAmountOutInternal(12000000000, 1859798333449789481797, 3403973201396, false)",
+//   getAmountOut(testAmountIn, USDC_RESERVE, WETH_RESERVE, false)
+// );
 
-console.log(
-  "maxInBeforePriceLimit",
-  maxInBeforePriceLimit(
-    getPrice(
-      testAmountIn,
-      getAmountOut(testAmountIn, USDC_RESERVE, WETH_RESERVE, false)
-    ) / 0.9, // 10% Increase of price, // You need to divide by 100 - PERCENT_IMPACT to get the accurate value
-    USDC_RESERVE,
-    WETH_RESERVE,
-    false
-  )
-);
+// console.log(
+//   "maxInBeforePriceLimit",
+//   maxInBeforePriceLimit(
+//     getPrice(
+//       testAmountIn,
+//       getAmountOut(testAmountIn, USDC_RESERVE, WETH_RESERVE, false)
+//     ) / 0.9, // 10% Increase of price, // You need to divide by 100 - PERCENT_IMPACT to get the accurate value
+//     USDC_RESERVE,
+//     WETH_RESERVE,
+//     false
+//   )
+// );

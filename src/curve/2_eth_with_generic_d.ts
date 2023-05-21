@@ -1,3 +1,6 @@
+// All curve pools are basically using this code
+// The only difference is for MetaPools
+
 const N_COINS = 2;
 const PRECISION = 1e18;
 const FEE_DENOMINATOR = 1e10;

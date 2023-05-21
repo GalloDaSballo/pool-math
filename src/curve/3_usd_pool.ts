@@ -1,3 +1,5 @@
+// Same as 2 but with 3 coins
+
 const N_COINS = 3;
 const PRECISION = 1e18;
 const FEE_DENOMINATOR = 1e10;

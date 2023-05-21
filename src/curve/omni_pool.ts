@@ -1,3 +1,6 @@
+// 2 and 3 (and 4) token pool, this works with all of them
+// Only missing MetaStable Pools
+
 /**
  * Since 99% of the math is the same we combine it here
  * TODO: Meta Stable Pool, which requires further work / porting over of more logic
@@ -121,8 +124,6 @@ function get_D(_xp, _amp) {
     //           if Dprev - D <= 1:
     //               return D
     // NOTE: IN TS we have more margin of error, for now
-    console.log("D", D);
-    console.log("Dprev", Dprev);
     if (D > Dprev) {
       if (D - Dprev <= MARGIN_OF_ERROR_FOR_CONVERGENCE) {
         return D;
@@ -248,9 +249,6 @@ function get_y(i, j, x, xp) {
     if (Math.abs(y - y_prev) < MARGIN_OF_ERROR_FOR_CONVERGENCE) {
       return y;
     }
-
-    console.log("y", y);
-    console.log("y_prev", y_prev);
   }
 
   throw Error("Y not converged");
@@ -274,15 +272,12 @@ function _xp_mem(_rates, _balances) {
 function get_dy(i, j, dx, balances, rates) {
   // xp: uint256[N_COINS] = self._xp_mem(rates, self._balances())
   const xp: number[] = _xp_mem(rates, balances); // Given balances we get the adjusted balances here
-  console.log("get_dy xp", xp);
 
   // x: uint256 = xp[i] + (dx * rates[i] / PRECISION)
   const x = xp[i] + (dx * rates[i]) / PRECISION;
-  console.log("get_dy x ", x);
 
   // y: uint256 = self.get_y(i, j, x, xp)
   const y = get_y(i, j, x, xp);
-  console.log("get_dy y ", y);
 
   // dy: uint256 = xp[j] - y - 1
   const dy = xp[j] - y - 1;

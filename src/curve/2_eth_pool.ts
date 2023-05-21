@@ -1,3 +1,5 @@
+// 2 tokens pool is optimized for gas but you can just use N_COINS (see with_generic_d versin)
+
 const N_COINS = 2;
 const PRECISION = 1e18;
 const FEE_DENOMINATOR = 1e10;

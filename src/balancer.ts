@@ -8,7 +8,7 @@ const DEFAUT_FEE = BigNumber("100000000000000");
 const DEFAULT_TOKEN_DECIMALS = 18;
 
 /**
- * Basic version of getAmountOut, with safe defaults
+ * Basic version of getAmountOutInternal, with safe defaults
  * Use `getAdvancedOut` if you need more fine tuning
  * @param amountIn
  * @param reserveIn
@@ -19,7 +19,7 @@ const DEFAULT_TOKEN_DECIMALS = 18;
  * @param tokenInDecimals
  * @returns
  */
-function getAmountOut(
+function getAmountOutInternal(
   amountIn,
   reserveIn,
   reserveOut,
@@ -65,7 +65,7 @@ function getAdvancedOut(
   swapFeePercentage,
   tokenInDecimals
 ) {
-  return getAmountOut(
+  return getAmountOutInternal(
     amountIn,
     reserveIn,
     reserveOut,
@@ -96,8 +96,8 @@ function adjustForWstEth(amountIn) {
 }
 
 // console.log(
-//   "getAmountOut()",
-//   getAmountOut(
+//   "getAmountOutInternal()",
+//   getAmountOutInternal(
 //     adjustForWstEth(1e18),
 //     BigNumber(adjustForWstEth(44927367147069128886805)),
 //     BigNumber(50584780108934902640531),
@@ -106,8 +106,8 @@ function adjustForWstEth(amountIn) {
 // );
 
 // console.log(
-//   "getAmountOut() 19500",
-//   getAmountOut(
+//   "getAmountOutInternal() 19500",
+//   getAmountOutInternal(
 //     adjustForWstEth(19500e18),
 //     BigNumber(adjustForWstEth(44927367147069128886805)),
 //     BigNumber(50584780108934902640531),
@@ -117,8 +117,8 @@ function adjustForWstEth(amountIn) {
 
 // 1147236160660854395722,1305533994569826426151
 console.log(
-  "getAmountOut() 1",
-  getAmountOut(
+  "getAmountOutInternal() 1",
+  getAmountOutInternal(
     adjustForWstEth(1e18),
     BigNumber(adjustForWstEth(1147236160660854395722)),
     BigNumber(1305533994569826426151),
@@ -127,11 +127,20 @@ console.log(
 );
 
 console.log(
-  "getAmountOut() 110e18",
-  getAmountOut(
+  "getAmountOutInternal() 110e18",
+  getAmountOutInternal(
     adjustForWstEth(110e18),
     BigNumber(adjustForWstEth(1147236160660854395722)),
     BigNumber(1305533994569826426151),
     true
   )
 );
+
+export function getAmountOut(amountIn, reserveIn, reserveOut, stable) {
+  return getAmountOutInternal(
+    BigNumber(amountIn),
+    BigNumber(reserveIn),
+    BigNumber(reserveOut),
+    stable
+  );
+}
