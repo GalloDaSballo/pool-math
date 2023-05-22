@@ -1,3 +1,5 @@
+import { makeAmountOutFunctionAfterProvidingReserves } from "./make";
+
 export const getPrice = (amountIn, amountOut) => {
   return amountIn / amountOut;
 };
@@ -24,8 +26,6 @@ function maxInBeforePriceLimitIteration(
   let counter = 0;
 
   while (tempMin < tempMax) {
-    console.log("tempMin", tempMin);
-    console.log("tempMax", tempMax);
     counter++;
     if (counter > 1000) {
       throw Error("DONE");
@@ -76,4 +76,116 @@ export function maxInBeforePriceLimit(priceLimit, getAmountOutFunction) {
   foundMin = res.min;
 
   return foundMin;
+}
+
+const MAX_MULTIPLIER = 1024;
+
+export function getPoolReserveMultiplierToAllowPriceImpactBelow(
+  priceLimit,
+  amountIn,
+  initialReserves,
+  getAmountOutGivenReservesFunction
+) {
+  // Starting from a swap that has higher price impact
+  const initialImpact = getPrice(
+    amountIn,
+    getAmountOutGivenReservesFunction(amountIn, initialReserves)
+  );
+
+  if (initialImpact < priceLimit) {
+    return 1;
+  }
+
+  // We iteratively try for a lower multiplier, until we find the classic binary overalp
+  let iterations = 0; // TODO: Consider using
+
+  let tempMin = 0;
+  let tempMax = MAX_MULTIPLIER;
+
+  // NOTE: Add +1 to avoid loop in which both values are the same
+  while (tempMin + 1 < tempMax) {
+    iterations += 1;
+    if (iterations > 10000) {
+      throw Error("Too Many Iterations");
+    }
+    const delta = (tempMax + tempMin) / 2;
+    const newMultiplier = 1 + delta;
+    if (newMultiplier < 1) {
+      throw Error("Multiplier below 1, big issue");
+    }
+    const newReserves = initialReserves.map((val) => val * newMultiplier);
+    const amountOut = getAmountOutGivenReservesFunction(amountIn, newReserves);
+    const newPrice = getPrice(amountIn, amountOut);
+
+    // TODO: There's a case in which we never found and we must revert
+    // TODO: Add that case
+    if (newPrice < priceLimit) {
+      tempMax = newMultiplier;
+    } else {
+      tempMin = newMultiplier;
+    }
+  }
+
+  return tempMin;
+
+  // Find a > 1 multiplier, within RANGE precision
+  // Than once added to the pool
+  // Will cause the priceOut to have an impact that is below the current one (obv)
+  // and that is below the max impact
+}
+
+// NOTE: Linear interpolation of time to replenishment
+// This should be used with a +- accuracy value as in reality replenishment is the sum of discrete arbitrages
+export function getPoolDiscreteRepetitionsUntilFullLiquidatedAmount(
+  priceLimit, // Price at which you stop buying
+  amountIn, // Total Amount you sell into the Pool
+  initialReserves, // Reserves for fn
+  getAmountOutGivenReservesFunction, // Fn that given amountIn and Reserves, returns the amount out
+  timeForReplenishmentInSeconds
+) {
+  // Given Pool Reserve
+  // And a time for replenishment (where we assume it takes X time to get up to 100%)
+  // Meaning that using 5% will take 5% time to replenish
+  // Find the time necessary to replenish the TVL, assuming liquidations happen
+  // And must be profitable (meaning the amount is always capped and we iterate over it)
+  const newReserves = initialReserves;
+  let amountLeft = amountIn;
+  let timeSpent = 0;
+
+  // timeForReplenishmentInSeconds
+  // Need to do a proportion since we double the tokens in timeForReplenishmentInSeconds
+  // But we cap it at current liquidity
+  // And we want to see the impact
+  // Then compute the time it takes to recharge
+
+  while (amountLeft > 0) {
+    // Get max before price limit (optimizer)
+
+    const newAmountOutFunction = makeAmountOutFunctionAfterProvidingReserves(
+      getAmountOutGivenReservesFunction,
+      newReserves
+    );
+
+    const limit = maxInBeforePriceLimit(priceLimit, newAmountOutFunction);
+
+    if (limit > amountLeft) {
+      amountLeft = 0;
+      // We done
+      break;
+    } else {
+      // We need to reduce
+      amountLeft -= limit;
+
+      // We need to change the reserves or just compute time until reserves replenish
+      const proportion = limit / initialReserves[0];
+      // This is the percentage of time
+
+      // Simulate passing of time
+      timeSpent += timeForReplenishmentInSeconds * (1 + proportion);
+      // This allows us to "wait" without needing to change reserves
+      // The downside is that there is no simming of price movement <- basically impossible for this project (unless you sim 100% of liquidity everywhere)
+    }
+  }
+
+  return timeSpent;
 }
