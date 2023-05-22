@@ -1,33 +1,39 @@
-# Typescript Package Starter
+# Pool Math
 
-A starter template to start your package with typescript
+Use `makeAmountOutGivenReservesFunction` and `makeAmountOutFunction` to make functions for you
 
-It uses typescript, eslint and jest
+All functions have this signature 
+```ts
+export function getAmountOut(
+  // Self describing params
+  amountIn: number,
+  reserveIn: number,
+  reserveOut: number,
 
-TS: Easy coding
-EsLint: Easy Formatting
-Jest: Confident Testing
-JSDoc: Free Documentation (as long as you add comments)
+  stable: boolean, // Is it for stableswap invariant? MUST be true for Bal and Curve
 
-## Usage
+  // EXTRA PARAMS, all extra always have defaults
+  amplificationParameter: number = DEFAUT_A,
+  swapFeePercentage: number = DEFAUT_FEE,
+  tokenInDecimals: number = DEFAULT_TOKEN_DECIMALS
+) {
+```
 
-Use it as template
+Implementations are manuallly rewritten (with exception of Balancer which already had an implementation)
 
-Build your own stuff
 
-## Scripts
+## Credits
 
-### build
-Build the package with TS
+### Original Math and Code
+Balancer + George Roman
+https://github.com/georgeroman/balancer-v2-pools/blob/main/src/pools/stable/math.ts
 
-### test
-Run jest on your test files
+Curve
+The Curve team
 
-### lint
-Lint your files
+Velo
+Velodrome
 
-### lint:fix
-Lint and fix what can be fixed
+### Grind to code this
 
-### doc
-Generate docs with JsDoc
+Alex The Entreprenerd 
