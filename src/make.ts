@@ -68,12 +68,17 @@ export const makeAmountOutGivenReservesFunction = (
   }
 };
 
-export const makeAmountOutFunction = (type: string, reserves, stable) => {
+export const makeAmountOutFunction = (
+  type: string,
+  reserves,
+  stable,
+  extraSettings?: ExtraSettings
+) => {
   // hack to bypass the type check
   if (type !== "Velo" && type !== "Curve" && type !== "Balancer") {
     throw Error("Wrong Type");
   }
-  const fn = makeAmountOutGivenReservesFunction(type, stable);
+  const fn = makeAmountOutGivenReservesFunction(type, stable, extraSettings);
   const adjusted = (amountIn) => {
     return fn(amountIn, reserves);
   };
