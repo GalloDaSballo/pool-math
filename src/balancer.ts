@@ -3,8 +3,8 @@ import { _calcOutGivenIn } from "./bal/bal-math";
 
 // NOTE: This is for stable math
 
-const DEFAUT_A = BigNumber("500000");
-const DEFAUT_FEE = BigNumber("100000000000000");
+const DEFAUT_A = 500000;
+const DEFAUT_FEE = 100000000000000;
 const DEFAULT_TOKEN_DECIMALS = 18;
 
 /**
@@ -24,56 +24,36 @@ function getAmountOutInternal(
   reserveIn,
   reserveOut,
   stable,
-  amplificationParameter = DEFAUT_A, // BN
-  swapFeePercentage = DEFAUT_FEE, // BN
-  tokenInDecimals = DEFAULT_TOKEN_DECIMALS
+  amplificationParameter, // BN
+  swapFeePercentage, // BN
+  tokenInDecimals
 ): number {
   if (stable !== true) {
     throw Error("Not implemented, balancer is only for stable");
   }
 
-  const tokenBalances = [reserveIn, reserveOut]; // BN
-  const tokenIndexIn = 0; // BN
+  const tokenBalances = [BigNumber(reserveIn), BigNumber(reserveOut)]; // BN
+  const tokenIndexIn = 0;
   const tokenIndexOut = 1;
 
   const tokenAmountIn = amountIn;
 
   const options = {
-    swapFeePercentage,
+    swapFeePercentage: BigNumber(swapFeePercentage),
     tokenInDecimals,
   };
 
   // amplification parameter
   const out = _calcOutGivenIn(
-    amplificationParameter, // A from curve
+    BigNumber(amplificationParameter), // A from curve
     tokenBalances, // Index in (prob 0) // TODO: See if rates are used to influence balances, if they are we adjust here and take the precision loss
     tokenIndexIn, //       this._tokens.map((t) => this._upScale(t.balance, t.decimals)),
     tokenIndexOut,
-    tokenAmountIn, //       this._upScale(amountIn, tokenIn.decimals),
+    BigNumber(tokenAmountIn), //       this._upScale(amountIn, tokenIn.decimals),
     options
   );
 
   return parseInt(out.toString(), 10);
-}
-
-function getAdvancedOut(
-  amountIn,
-  reserveIn,
-  reserveOut,
-  stable,
-  amplificationParameter,
-  swapFeePercentage,
-  tokenInDecimals
-) {
-  return getAmountOutInternal(
-    amountIn,
-    reserveIn,
-    reserveOut,
-    stable,
-    amplificationParameter,
-    swapFeePercentage,
-    tokenInDecimals
-  );
 }
 
 // From ETH to wstETH -> Add the rate from oracle, then go for it
@@ -118,29 +98,40 @@ function adjustForWstEth(amountIn) {
 // 1147236160660854395722,1305533994569826426151
 console.log(
   "getAmountOutInternal() 1",
-  getAmountOutInternal(
+  getAmountOut(
     adjustForWstEth(1e18),
-    BigNumber(adjustForWstEth(1147236160660854395722)),
-    BigNumber(1305533994569826426151),
+    adjustForWstEth(1147236160660854395722),
+    1305533994569826426151,
     true
   )
 );
 
 console.log(
   "getAmountOutInternal() 110e18",
-  getAmountOutInternal(
+  getAmountOut(
     adjustForWstEth(110e18),
-    BigNumber(adjustForWstEth(1147236160660854395722)),
-    BigNumber(1305533994569826426151),
+    adjustForWstEth(1147236160660854395722),
+    1305533994569826426151,
     true
   )
 );
 
-export function getAmountOut(amountIn, reserveIn, reserveOut, stable) {
+export function getAmountOut(
+  amountIn: number,
+  reserveIn: number,
+  reserveOut: number,
+  stable: boolean,
+  amplificationParameter: number = DEFAUT_A,
+  swapFeePercentage: number = DEFAUT_FEE,
+  tokenInDecimals: number = DEFAULT_TOKEN_DECIMALS
+) {
   return getAmountOutInternal(
-    BigNumber(amountIn),
-    BigNumber(reserveIn),
-    BigNumber(reserveOut),
-    stable
+    amountIn,
+    reserveIn,
+    reserveOut,
+    stable,
+    amplificationParameter,
+    swapFeePercentage,
+    tokenInDecimals
   );
 }

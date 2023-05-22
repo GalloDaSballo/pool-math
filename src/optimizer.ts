@@ -86,6 +86,9 @@ export function getPoolReserveMultiplierToAllowPriceImpactBelow(
   initialReserves,
   getAmountOutGivenReservesFunction
 ) {
+  if (amountIn == 0) {
+    return 1;
+  }
   // Starting from a swap that has higher price impact
   const initialImpact = getPrice(
     amountIn,

@@ -5,7 +5,28 @@ import { getAmountOut as veloGetAmountOut } from "./velo";
 const NORMALIZED_CURVE_RATES_TWO = [10 ** 18, 10 ** 18, 10 ** 18];
 const NORMALIZED_CURVE_RATES_THREE = [10 ** 18, 10 ** 18, 10 ** 18];
 
-export const makeAmountOutGivenReservesFunction = (type: string, stable) => {
+interface ExtraSettings {
+  customA?: number;
+  customFees?: number;
+  customRates?: number[];
+  customDecimals?: number;
+}
+
+const getCurveRates = (length: number, customRates?: number[]): number[] => {
+  if (customRates) {
+    return customRates;
+  }
+
+  return length === 2
+    ? NORMALIZED_CURVE_RATES_TWO
+    : NORMALIZED_CURVE_RATES_THREE; // RATES
+};
+
+export const makeAmountOutGivenReservesFunction = (
+  type: string,
+  stable: boolean,
+  extraSettings?: ExtraSettings
+) => {
   // hack to bypass the type check
   if (type !== "Velo" && type !== "Curve" && type !== "Balancer") {
     throw Error("Wrong Type");
@@ -23,11 +44,9 @@ export const makeAmountOutGivenReservesFunction = (type: string, stable) => {
         amountIn,
         reserves,
         true,
-        reserves.length === 2
-          ? NORMALIZED_CURVE_RATES_TWO
-          : NORMALIZED_CURVE_RATES_THREE, // RATES
-        1000000, // FEES
-        200000 // A
+        getCurveRates(reserves.length, extraSettings?.customRates),
+        extraSettings?.customFees ? extraSettings?.customFees : 1000000, // FEES
+        extraSettings?.customA ? extraSettings?.customA : 200000 // A
       );
     };
   }
@@ -36,7 +55,15 @@ export const makeAmountOutGivenReservesFunction = (type: string, stable) => {
     return (amountIn, reserves) => {
       console.log("Balancer", amountIn, reserves);
       // TODO: Rate providers here as well (technically also fees and A)
-      return balGetAmountOut(amountIn, reserves[0], reserves[1], true);
+      return balGetAmountOut(
+        amountIn,
+        reserves[0],
+        reserves[1],
+        true,
+        extraSettings?.customA,
+        extraSettings?.customFees,
+        extraSettings?.customDecimals
+      );
     };
   }
 };
