@@ -504,66 +504,66 @@ export function getAmountOut(
 // NOTE: Called as
 // dy = Curve(BASE_POOL).calc_withdraw_one_coin(dy * PRECISION / rates[1], base_j)
 
-function _calc_withdraw_one_coin(
-  _burn_amount,
-  i,
-  // TODO: We can just default to three pool here
-  rates = [], // Default to three_pool
-  balances = [], // Default to three pool
-  total_supply,
-  fee
-) {
-  const amp = A;
-  // const rates = RATE_MULTIPLIERS // rates
-  const xp = _xp_mem(balances);
+// function _calc_withdraw_one_coin(
+//   _burn_amount,
+//   i,
+//   // TODO: We can just default to three pool here
+//   rates = [], // Default to three_pool
+//   balances = [], // Default to three pool
+//   total_supply,
+//   fee
+// ) {
+//   const amp = A;
+//   // const rates = RATE_MULTIPLIERS // rates
+//   const xp = _xp_mem(balances);
 
-  // TODO: Needs coins because we are going to read from global and it will be a mess
-  const D0 = get_D(xp, amp);
+//   // TODO: Needs coins because we are going to read from global and it will be a mess
+//   const D0 = get_D(xp, amp);
 
-  // total_supply: uint256 = self.totalSupply
-  const D1 = D0 - (_burn_amount * D0) / total_supply;
+//   // total_supply: uint256 = self.totalSupply
+//   const D1 = D0 - (_burn_amount * D0) / total_supply;
 
-  // new_y: uint256 = self.get_y_D(amp, i, xp, D1)
-  const new_y = get_y_D(amp, i, xp, D1);
+//   // new_y: uint256 = self.get_y_D(amp, i, xp, D1)
+//   const new_y = get_y_D(amp, i, xp, D1);
 
-  // base_fee: uint256 = self.fee * N_COINS / (4 * (N_COINS - 1))
-  // xp_reduced: uint256[N_COINS] = empty(uint256[N_COINS])
-  const base_fee = (fee * N_COINS) / (4 * (N_COINS - 1));
-  const xp_reduced = [];
+//   // base_fee: uint256 = self.fee * N_COINS / (4 * (N_COINS - 1))
+//   // xp_reduced: uint256[N_COINS] = empty(uint256[N_COINS])
+//   const base_fee = (fee * N_COINS) / (4 * (N_COINS - 1));
+//   const xp_reduced = [];
 
-  // for j in range(N_COINS):
-  //     dx_expected: uint256 = 0
-  //     xp_j: uint256 = xp[j]
-  //     if j == i:
-  //         dx_expected = xp_j * D1 / D0 - new_y
-  //     else:
-  //         dx_expected = xp_j - xp_j * D1 / D0
-  //     xp_reduced[j] = xp_j - base_fee * dx_expected / FEE_DENOMINATOR
+//   // for j in range(N_COINS):
+//   //     dx_expected: uint256 = 0
+//   //     xp_j: uint256 = xp[j]
+//   //     if j == i:
+//   //         dx_expected = xp_j * D1 / D0 - new_y
+//   //     else:
+//   //         dx_expected = xp_j - xp_j * D1 / D0
+//   //     xp_reduced[j] = xp_j - base_fee * dx_expected / FEE_DENOMINATOR
 
-  for (let j = 0; j < N_COINS; j++) {
-    let dx_expected = 0;
-    const xp_j = xp[j];
+//   for (let j = 0; j < N_COINS; j++) {
+//     let dx_expected = 0;
+//     const xp_j = xp[j];
 
-    if (j == i) {
-      dx_expected = (xp_j * D1) / D0 - new_y;
-    } else {
-      dx_expected = xp_j - (xp_j * D1) / D0;
-    }
-    xp_reduced[j] = xp_j - (base_fee * dx_expected) / FEE_DENOMINATOR;
-  }
+//     if (j == i) {
+//       dx_expected = (xp_j * D1) / D0 - new_y;
+//     } else {
+//       dx_expected = xp_j - (xp_j * D1) / D0;
+//     }
+//     xp_reduced[j] = xp_j - (base_fee * dx_expected) / FEE_DENOMINATOR;
+//   }
 
-  // dy: uint256 = xp_reduced[i] - self.get_y_D(amp, i, xp_reduced, D1)
-  let dy = xp_reduced[i] - get_y_D(amp, i, xp_reduced, D1);
+//   // dy: uint256 = xp_reduced[i] - self.get_y_D(amp, i, xp_reduced, D1)
+//   let dy = xp_reduced[i] - get_y_D(amp, i, xp_reduced, D1);
 
-  // dy_0: uint256 = (xp[i] - new_y) * PRECISION / rates[i]  # w/o fees
-  const dy_0 = ((xp[i] - new_y) * PRECISION) / rates[i];
+//   // dy_0: uint256 = (xp[i] - new_y) * PRECISION / rates[i]  # w/o fees
+//   const dy_0 = ((xp[i] - new_y) * PRECISION) / rates[i];
 
-  // dy = (dy - 1) * PRECISION / rates[i]  # Withdraw less to account for rounding errors
-  dy = ((dy - 1) * PRECISION) / rates[i];
-  // return [dy, dy_0 - dy]
+//   // dy = (dy - 1) * PRECISION / rates[i]  # Withdraw less to account for rounding errors
+//   dy = ((dy - 1) * PRECISION) / rates[i];
+//   // return [dy, dy_0 - dy]
 
-  return [dy, dy_0 - dy];
-}
+//   return [dy, dy_0 - dy];
+// }
 
 function get_y_D(A, i, xp, D) {
   // assert i >= 0  # dev: i below zero
