@@ -1,6 +1,25 @@
 # Pool Math
 
+## Usage
+
+### Use the `amountOut` functions
 Use `makeAmountOutGivenReservesFunction` and `makeAmountOutFunction` to make functions for you
+
+### Get the price for a swap
+Given an amount in, use `getPrice(amountIn, getAmountOut(amountIn))` to get a quote
+You have to decide the amountIn as a price is not easy to define
+I'd recommend 10 ** decimals
+
+### Optimizer
+
+The optimizer file contains ways to compute:
+- Max amount in before the price changes too much, see: `maxInBeforePriceLimit`
+- Multiplier by which to multiply the reserves to allow the swap you want, see: `getPoolReserveMultiplierToAllowPriceImpactBelow`
+- The time it would take to profitably sell into a pool given the liquidity and the amount, see: `getPoolDiscreteRepetitionsUntilFullLiquidatedAmount`
+
+
+
+## Contributing
 
 All functions have this signature 
 ```ts
@@ -20,6 +39,7 @@ export function getAmountOut(
 ```
 
 Implementations are manuallly rewritten (with exception of Balancer which already had an implementation)
+
 
 
 ## Credits
