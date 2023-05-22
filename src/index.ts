@@ -1,7 +1,29 @@
 import { getAmountOut as CurveGetAmoutOut } from "./curve/omni_pool";
 import { getAmountOut as balGetAmountOut } from "./balancer";
 import { getAmountOut as veloGetAmountOut } from "./velo";
-import { maxInBeforePriceLimit, getPrice } from "./optimizer";
+import {
+  maxInBeforePriceLimit,
+  getPrice,
+  getPoolReserveMultiplierToAllowPriceImpactBelow,
+  getPoolDiscreteRepetitionsUntilFullLiquidatedAmount,
+} from "./optimizer";
+import { makeAmountOutGivenReservesFunction } from "./make";
+/**
+ * TVL Library
+ */
+
+export interface SystemState {
+  // AMT of tokens, either use or ignore decimals, it's fine
+  deposited: number;
+  borrowed: number;
+
+  // In BPS
+  ltv: number;
+  borrowFactor: number;
+  liquidationThreshold: number;
+}
+
+// TODO: Pool tokenA, tokenB, Liquidity?
 
 /** CURVE EXAMPLES */
 
@@ -97,11 +119,67 @@ console.log(
 );
 
 const veloPriceOut = getPrice(testAmountIn, veloOut);
+console.log("veloPriceOut", veloPriceOut);
+const veloPriceOutWithSlippage = veloPriceOut / 0.95;
+console.log("veloPriceOutWithSlippage", veloPriceOutWithSlippage);
 
 const maxUSDCInBeforePriceChange = maxInBeforePriceLimit(
-  veloPriceOut / 0.95,
+  veloPriceOutWithSlippage,
   veloAmountOutFunction
 );
 console.log("Found Velo Max", maxUSDCInBeforePriceChange);
 const veloWethOut = veloAmountOutFunction(maxUSDCInBeforePriceChange);
 console.log("Whi results in  veloWethOut,", veloWethOut);
+
+/** * TODO: NEW CODE */
+
+// We know 5% impact happens at
+const veloGetAmoutOutGivenReserves = makeAmountOutGivenReservesFunction(
+  "Velo",
+  false
+);
+
+const spotAmount = 1e6;
+const spotPrice = getPrice(spotAmount, veloAmountOutFunction(spotAmount));
+console.log("spotPrice", spotPrice);
+const ninetyNine = spotPrice / 0.99;
+console.log("ninetyNine", ninetyNine);
+
+const res = getPoolReserveMultiplierToAllowPriceImpactBelow(
+  ninetyNine,
+  testAmountIn * 100000,
+  [USDC_RESERVE, WETH_RESERVE],
+  veloGetAmoutOutGivenReserves
+);
+
+console.log("multiplier", res);
+
+const amountOutWithNewRes = veloGetAmoutOutGivenReserves(
+  testAmountIn * 100000,
+  [USDC_RESERVE, WETH_RESERVE].map((val) => val * res)
+);
+const newPrice = getPrice(testAmountIn * 100000, amountOutWithNewRes);
+console.log("newPrice", newPrice);
+console.log("ninetyNine", newPrice);
+console.log("spotPrice", spotPrice);
+
+// TODO: Write a test for this pls ser
+const ONE_HOUR = 60 * 60;
+
+const timeToSellTotalAmountWithoutMultiplier = getPoolDiscreteRepetitionsUntilFullLiquidatedAmount(
+  ninetyNine,
+  testAmountIn * 100000,
+  [USDC_RESERVE, WETH_RESERVE],
+  veloGetAmoutOutGivenReserves,
+  ONE_HOUR
+);
+
+console.log(
+  "To dump we need (in seconds)",
+  timeToSellTotalAmountWithoutMultiplier
+);
+
+console.log(
+  "To dump we need (in hours)",
+  timeToSellTotalAmountWithoutMultiplier / ONE_HOUR
+);
