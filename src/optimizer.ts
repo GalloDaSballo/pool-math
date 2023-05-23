@@ -78,17 +78,21 @@ export function maxInBeforePriceLimit(priceLimit, getAmountOutFunction) {
   return foundMin;
 }
 
-const MAX_MULTIPLIER = 1024;
+const DIVISOR = 1000;
+const MAX_MULTIPLIER = 1024 * DIVISOR;
 
+// TODO: NOT FINISHED YET
 export function getPoolReserveMultiplierToAllowPriceImpactBelow(
   priceLimit,
   amountIn,
   initialReserves,
   getAmountOutGivenReservesFunction
 ) {
-  if (amountIn == 0) {
+  if (amountIn === 0) {
     return 1;
   }
+
+  console.log("amountIn", amountIn);
   // Starting from a swap that has higher price impact
   const initialImpact = getPrice(
     amountIn,
@@ -96,23 +100,27 @@ export function getPoolReserveMultiplierToAllowPriceImpactBelow(
   );
 
   if (initialImpact < priceLimit) {
+    console.log("initialImpact", initialImpact);
+    console.log("priceLimit", priceLimit);
     return 1;
   }
 
   // We iteratively try for a lower multiplier, until we find the classic binary overalp
   let iterations = 0; // TODO: Consider using
 
-  let tempMin = 0;
+  let tempMin = 1;
   let tempMax = MAX_MULTIPLIER;
 
   // NOTE: Add +1 to avoid loop in which both values are the same
-  while (tempMin + 1 < tempMax) {
+  while (tempMin < tempMax) {
     iterations += 1;
     if (iterations > 10000) {
       throw Error("Too Many Iterations");
     }
     const delta = (tempMax + tempMin) / 2;
-    const newMultiplier = 1 + delta;
+    console.log("delta", delta);
+    const newMultiplier = tempMin + delta / DIVISOR;
+
     if (newMultiplier < 1) {
       throw Error("Multiplier below 1, big issue");
     }
@@ -123,13 +131,22 @@ export function getPoolReserveMultiplierToAllowPriceImpactBelow(
     // TODO: There's a case in which we never found and we must revert
     // TODO: Add that case
     if (newPrice < priceLimit) {
+      if (tempMax == newMultiplier) {
+        return tempMax; // TODO: Weird case
+      }
       tempMax = newMultiplier;
     } else {
       tempMin = newMultiplier;
     }
+
+    console.log("priceLimit", priceLimit);
+    console.log("newPrice", newPrice);
+    console.log("newMultiplier", newMultiplier);
+    console.log("tempMax", tempMax);
+    console.log("tempMin", tempMin);
   }
 
-  return tempMin;
+  return tempMax;
 
   // Find a > 1 multiplier, within RANGE precision
   // Than once added to the pool

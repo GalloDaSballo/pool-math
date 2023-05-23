@@ -47,7 +47,7 @@ Implementations are manuallly rewritten (with exception of Balancer which alread
 
 
 
-## Credits
+## Credits
 
 ### Original Math and Code
 Balancer + George Roman
@@ -62,3 +62,21 @@ Velodrome
 ### Grind to code this
 
 Alex The Entreprenerd 
+
+
+## TODO
+OPTIMIZER
+// TODO: Test for Max Amount In
+
+// TODO: Test for Pool Time for Recovery
+
+// TODO: Test for Liquidity Math
+
+
+CURVE
+// TODO: Metastable Pool
+
+ALL POOLS
+// Cost of LPing In
+
+// Cost of LPing Out
