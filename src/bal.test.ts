@@ -23,10 +23,6 @@ describe("Balancer Stable, 8 digits of imprecision", () => {
     customRates: rates,
   });
 
-  // TODO: RATE -> Rate is applied before
-  // TODO: Fix Math
-  // Prob pool settings or something
-
   describe("Balancer wstETH WETH", () => {
     it("Velo 1", () => {
       expect(comparable(getAmountOut(1000000000000000000))).toBe(
