@@ -104,9 +104,9 @@ export function getAmountOut(
   amplificationParameter: number = DEFAUT_A,
   swapFeePercentage: number = DEFAUT_FEE,
   tokenInDecimals: number = DEFAULT_TOKEN_DECIMALS,
-  customRates?: number[]
+  customRates: number[] = [1e18, 1e18]
 ) {
-  if (customRates) {
+  if (customRates[0] != 1e18 || customRates[1] != 1e18) {
     amountIn = (amountIn * customRates[0]) / 1e18;
     reserveIn = (reserveIn * customRates[0]) / 1e18;
     reserveOut = (reserveOut * customRates[1]) / 1e18;

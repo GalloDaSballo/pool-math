@@ -35,6 +35,7 @@ export function getAmountOut(
   amplificationParameter: number = DEFAUT_A,
   swapFeePercentage: number = DEFAUT_FEE,
   tokenInDecimals: number = DEFAULT_TOKEN_DECIMALS
+  customRates: number[] = [1e18, 1e18] // Rates, Bal multiplies all values by it, curve uses it in it's logic
 ) {
 ```
 
