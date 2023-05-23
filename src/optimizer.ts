@@ -89,7 +89,7 @@ export function maxInBeforePriceLimit(priceLimit, getAmountOutFunction) {
   return foundMin;
 }
 
-const DIVISOR = 1000;
+const DIVISOR = 10000;
 const MAX_MULTIPLIER = 1024 * DIVISOR;
 
 // TODO: NOT FINISHED YET
@@ -150,11 +150,11 @@ export function getPoolReserveMultiplierToAllowPriceImpactBelow(
       tempMin = newMultiplier;
     }
 
-    console.log("priceLimit", priceLimit);
-    console.log("newPrice", newPrice);
-    console.log("newMultiplier", newMultiplier);
-    console.log("tempMax", tempMax);
-    console.log("tempMin", tempMin);
+    // console.log("priceLimit", priceLimit);
+    // console.log("newPrice", newPrice);
+    // console.log("newMultiplier", newMultiplier);
+    // console.log("tempMax", tempMax);
+    // console.log("tempMin", tempMin);
   }
 
   return tempMax;
