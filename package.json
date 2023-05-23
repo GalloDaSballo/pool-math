@@ -1,6 +1,6 @@
 {
-  "name": "typescript-package-starter",
-  "description": "A simple Typescript template to start your package",
+  "name": "ts-amm-pool-math",
+  "description": "AMM Math with acceptable precision",
   "author": {
     "name": "Alex The Entreprenerd",
     "url": "https://github.com/GalloDaSballo",
