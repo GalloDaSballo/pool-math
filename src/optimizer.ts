@@ -205,10 +205,7 @@ export function getPoolDiscreteRepetitionsUntilFullLiquidatedAmount(
       amountLeft -= limit;
 
       // We need to change the reserves or just compute time until reserves replenish
-      console.log("limit", limit);
-      console.log("initialReserves[0]", newReserves[0]);
       const proportion = limit / newReserves[0];
-      console.log("proportion", proportion);
       // This is the percentage of time
 
       // Simulate passing of time
