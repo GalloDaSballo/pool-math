@@ -1,14 +1,17 @@
 import { makeAmountOutFunctionAfterProvidingReserves } from "./make";
 
-export const getPrice = (amountIn, amountOut) => {
+/**
+ * Price is a ration between `amountIn` and `amountOut`
+ * The higher the price, the more `amountIn` you need to pass for `amountOut`
+ */
+export function getPrice(amountIn, amountOut) {
   return amountIn / amountOut;
-};
+}
 
 // Loop where amount is i * delta_frac
 // Binary Search
 // Redo this N times (I think 9 or 10) for higher accuracy // 128 ^ 9 => 1e18 // 128 ^ 10 => 1e21
 // Or stop early if value is 1
-
 function maxInBeforePriceLimitIteration(
   priceLimit,
   getAmountOutFunction, // We want to receive this as a function so we can make it re-usable
@@ -62,6 +65,14 @@ function maxInBeforePriceLimitIteration(
   };
 }
 
+/**
+ * Given a monotonically increasing `getAmountOutFunction` and a `priceLimit`
+ * Returns the maximum `amountIn` you can pass to `getAmountOutFunction` before `price` becomes bigger than `priceLimit`
+ * NOTE: See `getPrice`
+ * @param priceLimit
+ * @param getAmountOutFunction
+ * @returns
+ */
 export function maxInBeforePriceLimit(priceLimit, getAmountOutFunction) {
   let foundMax = 2 ** 256 - 1;
   let foundMin = 0;
