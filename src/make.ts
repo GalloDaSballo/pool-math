@@ -3,7 +3,11 @@ import { getAmountOut as balGetAmountOut } from "./balancer";
 import { getAmountOut as veloGetAmountOut } from "./velo";
 
 const NORMALIZED_CURVE_RATES_TWO = [10 ** 18, 10 ** 18, 10 ** 18];
-const NORMALIZED_CURVE_RATES_THREE = [10 ** 18, 10 ** 18, 10 ** 18];
+const NORMALIZED_CURVE_RATES_THREE = [
+  1000000000000000000,
+  1000000000000000000000000000000,
+  1000000000000000000000000000000,
+];
 
 interface ExtraSettings {
   customA?: number;

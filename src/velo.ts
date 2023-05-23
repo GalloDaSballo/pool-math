@@ -61,12 +61,14 @@ export function getAmountOut(
   customDecimals: number[] = [1e18, 1e18]
 ): number {
   const updatedAmountIn = amountIn - (amountIn * VELO_FEES) / MAX_BPS;
-  return getAmountOutInternal(
-    updatedAmountIn,
-    reserveIn,
-    reserveOut,
-    stable,
-    customDecimals
+  return Math.floor(
+    getAmountOutInternal(
+      updatedAmountIn,
+      reserveIn,
+      reserveOut,
+      stable,
+      customDecimals
+    )
   );
 }
 

@@ -125,13 +125,15 @@ export function getAmountOut(
   swapFeePercentage: number = DEFAUT_FEE,
   tokenInDecimals: number = DEFAULT_TOKEN_DECIMALS
 ) {
-  return getAmountOutInternal(
-    amountIn,
-    reserveIn,
-    reserveOut,
-    stable,
-    amplificationParameter,
-    swapFeePercentage,
-    tokenInDecimals
+  return Math.floor(
+    getAmountOutInternal(
+      amountIn,
+      reserveIn,
+      reserveOut,
+      stable,
+      amplificationParameter,
+      swapFeePercentage,
+      tokenInDecimals
+    )
   );
 }
