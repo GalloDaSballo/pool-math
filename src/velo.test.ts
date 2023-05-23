@@ -12,7 +12,7 @@
   USDC amountIn 1000000000000
   WETH amountOut 422939331486138747104
 
-  // NOTE: These last 2 are accurate up to 6 digits
+  // TODO: These are less accurate, investigate
   USDC i 3
   USDC amountIn 5000000000000
   WETH amountOut 1095299774782376576231
