@@ -15,13 +15,13 @@ const comparable = (val) => Math.floor(val / 1e8);
  */
 
 describe("Balancer Stable, 8 digits of imprecision", () => {
-  const fromValToRate = (val) => (val * 1125263028751930526) / 1e18;
-  const reserves = [
-    fromValToRate(1103816941445067400656),
-    1020049918708824070182,
-  ];
+  const rates = [1125263028751930526, 1e18];
 
-  const getAmountOut = makeAmountOutFunction("Balancer", reserves, true);
+  const reserves = [1103816941445067400656, 1020049918708824070182];
+
+  const getAmountOut = makeAmountOutFunction("Balancer", reserves, true, {
+    customRates: rates,
+  });
 
   // TODO: RATE -> Rate is applied before
   // TODO: Fix Math
@@ -29,19 +29,19 @@ describe("Balancer Stable, 8 digits of imprecision", () => {
 
   describe("Balancer wstETH WETH", () => {
     it("Velo 1", () => {
-      expect(comparable(getAmountOut(fromValToRate(1000000000000000000)))).toBe(
+      expect(comparable(getAmountOut(1000000000000000000))).toBe(
         comparable(1124698774312831587)
       );
     });
     it("Velo 2", () => {
-      expect(
-        comparable(getAmountOut(fromValToRate(10000000000000000000)))
-      ).toBe(comparable(11246774022270881393));
+      expect(comparable(getAmountOut(10000000000000000000))).toBe(
+        comparable(11246774022270881393)
+      );
     });
     it("Velo 3", () => {
-      expect(
-        comparable(getAmountOut(fromValToRate(50000000000000000000)))
-      ).toBe(comparable(56229016387923591565));
+      expect(comparable(getAmountOut(50000000000000000000))).toBe(
+        comparable(56229016387923591565)
+      );
     });
   });
 });

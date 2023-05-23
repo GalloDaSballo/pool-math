@@ -103,8 +103,15 @@ export function getAmountOut(
   stable: boolean,
   amplificationParameter: number = DEFAUT_A,
   swapFeePercentage: number = DEFAUT_FEE,
-  tokenInDecimals: number = DEFAULT_TOKEN_DECIMALS
+  tokenInDecimals: number = DEFAULT_TOKEN_DECIMALS,
+  customRates?: number[]
 ) {
+  if (customRates) {
+    amountIn = (amountIn * customRates[0]) / 1e18;
+    reserveIn = (reserveIn * customRates[0]) / 1e18;
+    reserveOut = (reserveOut * customRates[1]) / 1e18;
+  }
+
   return Math.floor(
     getAmountOutInternal(
       amountIn,

@@ -70,7 +70,8 @@ export const makeAmountOutGivenReservesFunction = (
         true,
         extraSettings?.customA,
         extraSettings?.customFees,
-        extraSettings?.customDecimals?.[0] // Balancer only looks at amt in
+        extraSettings?.customDecimals?.[0], // Balancer only looks at amt in
+        extraSettings?.customRates
       );
     };
   }
