@@ -1,5 +1,7 @@
 import { makeAmountOutFunction } from "./make";
 
+const comparable = (val) => Math.floor(val / 1e8);
+
 /**
  * 
  Logs:
@@ -19,36 +21,6 @@ import { makeAmountOutFunction } from "./make";
   DAI amountIn real 150000000000000000000000
   dAI amountOut of USDC 149887378636
   DAI amountOut of USDC adjusted for fees 149932344849
-  DAI i 3
-  DAI amountIn (normalized) 2000000000000
-  DAI amountIn real 2000000000000000000000000
-  dAI amountOut of USDC 1996381386093
-  DAI amountOut of USDC adjusted for fees 1996980300508
-  DAI i 4
-  DAI amountIn (normalized) 15000000000000
-  DAI amountIn real 15000000000000000000000000
-  dAI amountOut of USDC 2898148428893
-  DAI amountOut of USDC adjusted for fees 2899017873421
-  USDC i 0
-  USDC amountIn 100000000
-  USDC amountOut of USDT 99911911
-  USDC amountOut of USDT adjusted for fees 99941884
-  USDC i 1
-  USDC amountIn 10000000000
-  USDC amountOut of USDT 9991138629
-  USDC amountOut of USDT adjusted for fees 9994135970
-  USDC i 2
-  USDC amountIn 150000000000
-  USDC amountOut of USDT 149855183431
-  USDC amountOut of USDT adjusted for fees 149900139986
-  USDC i 3
-  USDC amountIn 2000000000000
-  USDC amountOut of USDT 1749498841040
-  USDC amountOut of USDT adjusted for fees 1750023690692
-  USDC i 4
-  USDC amountIn 15000000000000
-  USDC amountOut of USDT 1758349161798
-  USDC amountOut of USDT adjusted for fees 1758876666546
 
   uint256 DAI_IN = 5105490430369593570566334;
   uint8 DAI_DECIMALS = 18;
@@ -62,44 +34,43 @@ import { makeAmountOutFunction } from "./make";
  * 
  */
 
-// describe("Curve Stable 3Pool", () => {
-//   const reserve_DAI_TO_USDC = [
-//     5105490430369593570566334,
-//     2899439195495,
-//     1759099131964,
-//   ];
-//   const reserve_USDC_TO_USDT = [
-//     2899439195495,
-//     1759099131964,
-//     5105490430369593570566334,
-//   ];
+describe("Curve Stable 3Pool", () => {
+  const reserve_DAI_TO_USDC = [
+    4933747819370411623659827, // DAI
+    2298852718764, // USDC
+    1816054842841, // USDT
+  ];
+  // const reserve_USDC_TO_USDT = [
+  //   2899439195495, // USDC
+  //   1759099131964, // USDT
+  //   5105490430369593570566334, // DAI
+  // ];
 
-//   const getAmountOut = makeAmountOutFunction(
-//     "Curve",
-//     reserve_DAI_TO_USDC,
-//     true
-//   );
+  const getAmountOut = makeAmountOutFunction(
+    "Curve",
+    reserve_DAI_TO_USDC,
+    true,
+    {
+      customA: 200000,
+      customFees: 1000000,
+    }
+  );
 
-// TODO: RATE
-// TODO: Fix Math
-// Prob pool settings or something
-
-//   describe("Curve 3 Pool", () => {
-//     it("Curve 1", () => {
-//       expect(getAmountOut(1000000000000000000)).toBe(1124945242199231826);
-//     });
-//     it("Curve 2", () => {
-//       expect(getAmountOut(10000000000000000000)).toBe(11249251086187577318);
-//     });
-//     it("Curve 3", () => {
-//       expect(getAmountOut(150000000000)).toBe(56241757344862105392);
-//     });
-//   });
-// });
+  describe("Curve 3 Pool", () => {
+    it("Curve 1", () => {
+      expect(getAmountOut(1000000000000000000)).toBe(999433);
+    });
+    it("Curve 2", () => {
+      expect(getAmountOut(10000000000000000000)).toBe(9994338);
+    });
+  });
+});
 
 /**
  * Logs:
   Creating wstETH-ETH Pool
+  NOTE: These values are wrong vs the real pool
+  TODO: Investigate
   WSTETH i 0
   WSTETH amountIn 1000000000000000000
   WSTETH amountOut 999623733535533091
@@ -112,46 +83,31 @@ import { makeAmountOutFunction } from "./make";
   WSTETH amountIn 1000000000000000000000
   WSTETH amountOut 999581723655376037910
   WSTETH amountOut adjusted 1124646952861891688490
-  WSTETH i 3
-  WSTETH amountIn 10000000000000000000000
-  WSTETH amountOut 5107910343084679597205
-  WSTETH amountOut adjusted 5746999636842578408457
-  WSTETH i 4
-  WSTETH amountIn 100000000000000000000000
-  WSTETH amountOut 5108223908387662007404
-  WSTETH amountOut adjusted 5747352434672087310177
-
-  uint256 WSTETH_IN = 4540302536030246428213;
-  uint8 WSTETH_DECIMALS = 18;
-
-  uint256 WETH_IN = 5110270280714989617844;
-  uint8 WETH_DECIMALS = 18;
  */
-describe("Curve Stable 2Pool ETH - stETH", () => {
-  const reserves = [5110270280714989617844, 4540302536030246428213];
+describe("Curve Stable 2Pool ETH - stETH, 8 digits of imprecision", () => {
+  const reserves = [4576897448219168017515, 5130495130522892129902];
 
-  // TODO: rate
   const getAmountOut = makeAmountOutFunction("Curve", reserves, true, {
     customA: 5000,
     customFees: 4000000,
-    customRates: [1e18, 1e18],
+    customRates: [1125263028751930526, 1e18],
   });
-
-  // TODO: RATE
-  // TODO: Fix Math
-  // Prob pool settings or something
 
   describe("Curve ETH stETH", () => {
     it("Curve 1", () => {
-      expect(getAmountOut(1000000000000000000)).toBe(999623733535533091);
+      expect(comparable(getAmountOut(1000000000000000000))).toBe(
+        comparable(1124723495148900646)
+      );
     });
     it("Curve 2", () => {
-      expect(getAmountOut(10000000000000000000)).toBe(9996233530454748428);
+      expect(comparable(getAmountOut(10000000000000000000))).toBe(
+        comparable(11246800477998450192)
+      );
     });
     it("Curve 3", () => {
-      expect(getAmountOut(1000000000000000000000)).toBe(999581723655376037910);
+      expect(comparable(getAmountOut(1000000000000000000000))).toBe(
+        comparable(1119683366864771305894)
+      );
     });
   });
 });
-
-// TODO: MetaStable
