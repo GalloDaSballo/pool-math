@@ -2,10 +2,19 @@ const VELO_FEES = 5; // 30 bps for fees
 const MAX_BPS = 10_000;
 
 // NOTE: Assumes all values are normalized to 18 decimals
-function k(x, y, stable) {
+function k(x, y, stable, decimals: number[]) {
   if (stable) {
-    const _a = (x * y) / 1e18;
-    const _b = (x * y) / 1e18 + (x * y) / 1e18;
+    /**
+     * uint _x = x * 1e18 / decimals0;
+      uint _y = y * 1e18 / decimals1;
+      uint _a = (_x * _y) / 1e18;
+      uint _b = ((_x * _x) / 1e18 + (_y * _y) / 1e18);
+      return _a * _b / 1e18;  // x3y+y3x >= k
+     */
+    const _x = (x * 1e18) / decimals[0];
+    const _y = (y * 1e18) / decimals[1];
+    const _a = (_x * _y) / 1e18;
+    const _b = (_x * _x) / 1e18 + (_y * _y) / 1e18;
     return (_a * _b) / 1e18; // x3y+y3x >= k
   }
   return x * y; // xy >= k
@@ -44,22 +53,53 @@ function get_y(x0: number, xy: number, y: number): number {
   return y;
 }
 
-export function getAmountOut(amountIn, reserveIn, reserveOut, stable): number {
+export function getAmountOut(
+  amountIn,
+  reserveIn,
+  reserveOut,
+  stable,
+  customDecimals: number[] = [1e18, 1e18]
+): number {
   const updatedAmountIn = amountIn - (amountIn * VELO_FEES) / MAX_BPS;
-  return getAmountOutInternal(updatedAmountIn, reserveIn, reserveOut, stable);
+  return getAmountOutInternal(
+    updatedAmountIn,
+    reserveIn,
+    reserveOut,
+    stable,
+    customDecimals
+  );
 }
 
-function getAmountOutInternal(amountIn, reserveIn, reserveOut, stable): number {
+function getAmountOutInternal(
+  amountIn,
+  reserveIn,
+  reserveOut,
+  stable,
+  customDecimals
+): number {
   if (stable) {
-    const xy = k(reserveIn, reserveOut, stable);
+    /**
+     *       
+      uint xy =  _k(_reserve0, _reserve1);
+      _reserve0 = _reserve0 * 1e18 / decimals0;
+      _reserve1 = _reserve1 * 1e18 / decimals1;
+      (uint reserveA, uint reserveB) = tokenIn == token0 ? (_reserve0, _reserve1) : (_reserve1, _reserve0);
+      amountIn = tokenIn == token0 ? amountIn * 1e18 / decimals0 : amountIn * 1e18 / decimals1;
+      uint y = reserveB - _get_y(amountIn+reserveA, xy, reserveB);
+      return y * (tokenIn == token0 ? decimals1 : decimals0) / 1e18;
+     */
+    const xy = k(reserveIn, reserveOut, stable, customDecimals);
+    console.log("xy", xy);
 
-    const y = reserveOut - get_y(amountIn + reserveIn, xy, reserveOut);
-    return y;
+    const _reserve0 = (reserveIn * 1e18) / customDecimals[0];
+    const _reserve1 = (reserveOut * 1e18) / customDecimals[1];
+
+    const normalizedAmountIn = (amountIn * 1e18) / customDecimals[0];
+
+    const y = _reserve1 - get_y(normalizedAmountIn + _reserve0, xy, _reserve1);
+    return Math.floor((y * customDecimals[1]) / 1e18); // NOTE: We floor here, we could floor everywhere
   }
 
-  // console.log("amountIn", amountIn);
-  // console.log("reserveOut", reserveOut);
-  // console.log("reserveIn", reserveIn);
   return (amountIn * reserveOut) / (reserveIn + amountIn);
 }
 
@@ -76,10 +116,6 @@ function getAmountOutInternal(amountIn, reserveIn, reserveOut, stable): number {
  * Brute force amount for a 10% increase
  * 1.8377906826615076e-9 * 1.1
  */
-
-const USDC_RESERVE = 3403973201396;
-const WETH_RESERVE = 1859798333449789481797;
-const testAmountIn = 10 ** 6;
 
 // TODO: DEPRECATE - OLD
 // console.log(

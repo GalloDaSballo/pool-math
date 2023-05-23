@@ -67,7 +67,9 @@ describe("Velo Stable", () => {
   //
   const reserves = [1378798585397, 1204218837708];
 
-  const getAmountOut = makeAmountOutFunction("Velo", reserves, true);
+  const getAmountOut = makeAmountOutFunction("Velo", reserves, true, {
+    customDecimals: [1e6, 1e6],
+  });
 
   describe("Velo USDC USDT", () => {
     it("Velo 1", () => {

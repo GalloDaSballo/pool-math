@@ -9,7 +9,7 @@ interface ExtraSettings {
   customA?: number;
   customFees?: number;
   customRates?: number[];
-  customDecimals?: number;
+  customDecimals?: number[];
 }
 
 const getCurveRates = (length: number, customRates?: number[]): number[] => {
@@ -33,7 +33,13 @@ export const makeAmountOutGivenReservesFunction = (
   }
   if (type === "Velo") {
     return (amountIn, reserves) => {
-      return veloGetAmountOut(amountIn, reserves[0], reserves[1], stable);
+      return veloGetAmountOut(
+        amountIn,
+        reserves[0],
+        reserves[1],
+        stable,
+        extraSettings?.customDecimals
+      );
     };
   }
 
@@ -62,7 +68,7 @@ export const makeAmountOutGivenReservesFunction = (
         true,
         extraSettings?.customA,
         extraSettings?.customFees,
-        extraSettings?.customDecimals
+        extraSettings?.customDecimals?.[0] // Balancer only looks at amt in
       );
     };
   }
