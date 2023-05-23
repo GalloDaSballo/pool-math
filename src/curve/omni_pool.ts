@@ -63,7 +63,7 @@ export function getAmountOut(
 
   FEE = override_fee;
   A = override_a;
-  return get_dy(0, 1, tokenIn, reserves, rates);
+  return Math.floor(get_dy(0, 1, tokenIn, reserves, rates));
 }
 
 function get_D(_xp, _amp) {
