@@ -66,12 +66,12 @@ Alex The Entreprenerd
 
 ## TODO
 OPTIMIZER
-// TODO: Test for Max Amount In
-
 // TODO: Test for Pool Time for Recovery
 
 // TODO: Test for Liquidity Math
 
+
+## TODO: 2nd iteration
 
 CURVE
 // TODO: Metastable Pool
