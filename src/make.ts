@@ -49,7 +49,6 @@ export const makeAmountOutGivenReservesFunction = (
 
   if (type === "Curve") {
     return (amountIn, reserves) => {
-      console.log("Curve", amountIn, reserves);
       return CurveGetAmoutOut(
         amountIn,
         reserves,
@@ -63,7 +62,6 @@ export const makeAmountOutGivenReservesFunction = (
 
   if (type === "Balancer") {
     return (amountIn, reserves) => {
-      console.log("Balancer", amountIn, reserves);
       // TODO: Rate providers here as well (technically also fees and A)
       return balGetAmountOut(
         amountIn,

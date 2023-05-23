@@ -96,26 +96,6 @@ function adjustForWstEth(amountIn) {
 // );
 
 // 1147236160660854395722,1305533994569826426151
-console.log(
-  "getAmountOutInternal() 1",
-  getAmountOut(
-    adjustForWstEth(1e18),
-    adjustForWstEth(1147236160660854395722),
-    1305533994569826426151,
-    true
-  )
-);
-
-console.log(
-  "getAmountOutInternal() 110e18",
-  getAmountOut(
-    adjustForWstEth(110e18),
-    adjustForWstEth(1147236160660854395722),
-    1305533994569826426151,
-    true
-  )
-);
-
 export function getAmountOut(
   amountIn: number,
   reserveIn: number,

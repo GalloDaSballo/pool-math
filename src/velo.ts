@@ -91,7 +91,6 @@ function getAmountOutInternal(
       return y * (tokenIn == token0 ? decimals1 : decimals0) / 1e18;
      */
     const xy = k(reserveIn, reserveOut, stable, customDecimals);
-    console.log("xy", xy);
 
     const _reserve0 = (reserveIn * 1e18) / customDecimals[0];
     const _reserve1 = (reserveOut * 1e18) / customDecimals[1];
