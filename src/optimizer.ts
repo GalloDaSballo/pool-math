@@ -179,6 +179,12 @@ export function getPoolDiscreteRepetitionsUntilFullLiquidatedAmount(
   let amountLeft = amountIn;
   let timeSpent = 0;
 
+  // NOTE: We use the same fn and accept the accuracy loss
+  const newAmountOutFunction = makeAmountOutFunctionAfterProvidingReserves(
+    getAmountOutGivenReservesFunction,
+    newReserves
+  );
+
   // timeForReplenishmentInSeconds
   // Need to do a proportion since we double the tokens in timeForReplenishmentInSeconds
   // But we cap it at current liquidity
@@ -187,11 +193,6 @@ export function getPoolDiscreteRepetitionsUntilFullLiquidatedAmount(
 
   while (amountLeft > 0) {
     // Get max before price limit (optimizer)
-
-    const newAmountOutFunction = makeAmountOutFunctionAfterProvidingReserves(
-      getAmountOutGivenReservesFunction,
-      newReserves
-    );
 
     const limit = maxInBeforePriceLimit(priceLimit, newAmountOutFunction);
 
@@ -204,11 +205,14 @@ export function getPoolDiscreteRepetitionsUntilFullLiquidatedAmount(
       amountLeft -= limit;
 
       // We need to change the reserves or just compute time until reserves replenish
-      const proportion = limit / initialReserves[0];
+      console.log("limit", limit);
+      console.log("initialReserves[0]", newReserves[0]);
+      const proportion = limit / newReserves[0];
+      console.log("proportion", proportion);
       // This is the percentage of time
 
       // Simulate passing of time
-      timeSpent += timeForReplenishmentInSeconds * (1 + proportion);
+      timeSpent += timeForReplenishmentInSeconds; // TODO: Can be fined tuned as proportion of Liquidity, but some AMMs will be off due to scaling
       // This allows us to "wait" without needing to change reserves
       // The downside is that there is no simming of price movement <- basically impossible for this project (unless you sim 100% of liquidity everywhere)
     }

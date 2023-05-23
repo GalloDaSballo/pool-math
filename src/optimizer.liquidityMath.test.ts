@@ -3,7 +3,6 @@
  */
 
 import {
-  makeAmountOutFunction,
   makeAmountOutFunctionAfterProvidingReserves,
   makeAmountOutGivenReservesFunction,
 } from "./make";
@@ -24,9 +23,6 @@ import {
  * - Verify they are same / close within error value (satisfactory check)
  * - Verify that changing the multiplier by another error value will not offer a similar price (optimality check)
  */
-
-// Trim out 8 decimals, then divide and ensure it's basically a 0
-const comparable = (val) => Math.floor(Math.floor(val * 1e18) / 1e2);
 
 describe("Find Min Multiplier Necessary to allow Price Impact to be below %", () => {
   it("If swap is already profitable, return 1", () => {
@@ -137,4 +133,6 @@ describe("Find Min Multiplier Necessary to allow Price Impact to be below %", ()
 
     expect(driftedPrice).toBeGreaterThan(PRICE_AFTER_IMPACT_TO_FIND);
   });
+
+  // TODO: Same stuff but for Curve and Bal
 });
