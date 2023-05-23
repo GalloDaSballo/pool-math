@@ -103,7 +103,6 @@ export function getPoolReserveMultiplierToAllowPriceImpactBelow(
     return 1;
   }
 
-  console.log("amountIn", amountIn);
   // Starting from a swap that has higher price impact
   const initialImpact = getPrice(
     amountIn,
@@ -111,8 +110,6 @@ export function getPoolReserveMultiplierToAllowPriceImpactBelow(
   );
 
   if (initialImpact < priceLimit) {
-    console.log("initialImpact", initialImpact);
-    console.log("priceLimit", priceLimit);
     return 1;
   }
 
@@ -129,7 +126,6 @@ export function getPoolReserveMultiplierToAllowPriceImpactBelow(
       throw Error("Too Many Iterations");
     }
     const delta = (tempMax + tempMin) / 2;
-    console.log("delta", delta);
     const newMultiplier = tempMin + delta / DIVISOR;
 
     if (newMultiplier < 1) {
@@ -142,7 +138,7 @@ export function getPoolReserveMultiplierToAllowPriceImpactBelow(
     // TODO: There's a case in which we never found and we must revert
     // TODO: Add that case
     if (newPrice < priceLimit) {
-      if (tempMax == newMultiplier) {
+      if (tempMax === newMultiplier) {
         return tempMax; // TODO: Weird case
       }
       tempMax = newMultiplier;
