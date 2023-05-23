@@ -1,5 +1,9 @@
 # Pool Math
 
+## NOTE
+To publish bump the version then copy paste README and package.json
+There's probably a better way
+
 ## Usage
 
 ### Use the `amountOut` functions
