@@ -135,4 +135,78 @@ describe("Find Min Multiplier Necessary to allow Price Impact to be below %", ()
   });
 
   // TODO: Same stuff but for Curve and Bal
+  it("If swap is not profitable BAL", () => {
+    // Data from 0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080
+    const wstETH_RES = 3.6998514304359667e22;
+    const WETH_RES = 4.102865823704856e22;
+    const RESERVES = [wstETH_RES, WETH_RES];
+    const testAmountIn = 10 ** 18;
+
+    const getAmountBalGivenReserve = makeAmountOutGivenReservesFunction(
+      "Balancer",
+      false,
+      {
+        customRates: [1125573684330119600, 1000000000000000000],
+        customA: 50000,
+        customFees: 400000000000000,
+      }
+    );
+
+    const getAmountOutBal = makeAmountOutFunctionAfterProvidingReserves(
+      getAmountBalGivenReserve,
+      RESERVES
+    );
+
+    const balOut = getAmountOutBal(testAmountIn);
+
+    const balPriceOut = getPrice(testAmountIn, balOut);
+
+    const PRICE_AFTER_IMPACT = balPriceOut / 0.95;
+    const PRICE_AFTER_IMPACT_TO_FIND = balPriceOut / 0.99;
+
+    // Max amount before 5% impact
+    const maxUSDCInBeforePriceChange = maxInBeforePriceLimit(
+      PRICE_AFTER_IMPACT,
+      getAmountOutBal
+    );
+
+    // Let's say we want to swap that, but with 1% impact
+    const poolMul = getPoolReserveMultiplierToAllowPriceImpactBelow(
+      PRICE_AFTER_IMPACT_TO_FIND,
+      maxUSDCInBeforePriceChange,
+      RESERVES,
+      getAmountBalGivenReserve
+    );
+
+    // Since test amount in < maxUSDCInBeforePriceChange
+    expect(maxUSDCInBeforePriceChange).toBeGreaterThan(testAmountIn);
+    // Obv > 1
+    expect(poolMul).toBeGreaterThan(1);
+
+    // Back test that this makes sense
+    const updatedRes = RESERVES.map((res) => res * poolMul);
+
+    // Compute price impact on update reserves
+    const newPrice = getPrice(
+      maxUSDCInBeforePriceChange,
+      getAmountBalGivenReserve(maxUSDCInBeforePriceChange, updatedRes)
+    );
+
+    // Verify it's below 1% impact (satisfiability verified)
+    expect(newPrice).toBeLessThan(PRICE_AFTER_IMPACT_TO_FIND);
+
+    // Verify Optimality, if we reduce reserves by PRECISION %
+    // We get that the impact is bigger
+    const DRIFT_VALUE = 0.0002; // 2 BPS, maybe 2 but let's be safe
+    const driftedReserves = RESERVES.map(
+      (res) => res * (poolMul - DRIFT_VALUE)
+    );
+
+    const driftedPrice = getPrice(
+      maxUSDCInBeforePriceChange,
+      getAmountBalGivenReserve(maxUSDCInBeforePriceChange, driftedReserves)
+    );
+
+    expect(driftedPrice).toBeGreaterThan(PRICE_AFTER_IMPACT_TO_FIND);
+  });
 });
