@@ -66,7 +66,7 @@ export function getAmountOut(
   return Math.floor(get_dy(0, 1, tokenIn, reserves, rates));
 }
 
-function get_D(_xp, _amp) {
+export function get_D(_xp, _amp) {
   // def get_D(_xp: uint256[N_COINS], _amp: uint256) -> uint256:
   //   """
   //   D invariant calculation in non-overflowing integer operations
