@@ -4,8 +4,17 @@
 // https://optimistic.etherscan.io/token/0x8c6f28f2f1a3c87f0f938b96d27520d9751ec8d9
 // 3 CRV: https://optimistic.etherscan.io/address/0x1337BedC9D22ecbe766dF105c9623922A27963EC#readContract
 
-import { _xp_mem, get_D, get_dy } from "./omni_pool";
+import {
+  _xp_mem,
+  calc_token_amount,
+  calc_withdraw_one_coin,
+  get_D,
+  get_dy,
+  get_y,
+} from "./omni_pool";
 
+const FEE_DENOMINATOR = 1e10;
+const PRECISION = 1e18;
 // https://optimistic.etherscan.io/address/0x2db0e83599a91b508ac268a6197b8b14f5e72840#code#L645
 // RATE 10** (36 - decimals) = 10**18
 
@@ -20,11 +29,23 @@ const SAMPLE_RATES = [1e18, 1018222424688284241];
 // Cost of Deposit One Coin -> Swap
 // Deposit one coin = calc_token_amount
 
-function get_dy_underlying(i, j, dx, reserves, rates) {
+function get_dy_underlying(
+  i,
+  j,
+  dx,
+  reserves,
+  rates,
+  fee,
+  base_amp,
+  base_rates,
+  _base_balances,
+  _base_totalSupply,
+  _base_fee
+) {
   const xp = _xp_mem(rates, reserves);
   const MAX_COIN = rates.length - 1;
 
-  const x = 0;
+  let x = 0;
   let base_i = 0;
   let base_j = 0;
   let meta_i = 0;
@@ -60,14 +81,58 @@ function get_dy_underlying(i, j, dx, reserves, rates) {
   if (i == 0) {
     x = xp[i] + dx * (rates[0] / 10 ** 18); // TODO: This may be different per impl, due to hardcoded 10e18
   } else if (j == 0) {
-    const base_inputs = [];
-    // TODO: Basically empty list with only the token you want
-    // Add Liquidity and see what you get
-    // TODO: Port over base pool calc_token_amount
-    // TODO: Port over base pool _calc_withdraw_one_coin
+    const base_inputs = rates.map((r) => r - r); // 0s with length of rates
+    base_inputs[base_i] = dx;
+    x =
+      (calc_token_amount(
+        base_inputs,
+        true,
+        base_amp,
+        base_rates,
+        _base_balances,
+        _base_totalSupply
+      ) *
+        rates[1]) /
+      PRECISION;
+    x -= (x * _base_fee) / (2 * FEE_DENOMINATOR);
+    x += xp[MAX_COIN];
   } else {
-    throw Error("Base Swap not supported"); // If you want to do base swap, just use the omni_poool
+    throw Error("Base Swap not supported"); // If you want to do base swap, just use the omni_pool
   }
+
+  //     # This pool is involved only when in-pool assets are used
+  //     y: uint256 = self.get_y(meta_i, meta_j, x, xp)
+  //     dy: uint256 = xp[meta_j] - y - 1
+  //     dy = (dy - self.fee * dy / FEE_DENOMINATOR)
+
+  //     # If output is going via the metapool
+  //     if j == 0:
+  //         dy /= (rates[0] / 10**18)
+  //     else:
+  //         # j is from BasePool
+  //         # The fee is already accounted for
+  //         dy = Curve(BASE_POOL).calc_withdraw_one_coin(dy * PRECISION / rates[1], base_j)
+
+  //     return dy
+  const y = get_y(meta_i, meta_j, x, xp);
+  let dy = xp[meta_j] - y - 1;
+  dy -= (fee * dy) / FEE_DENOMINATOR;
+
+  if (j === 0) {
+    dy /= rates[0] / 10 ** 18;
+  } else {
+    dy = calc_withdraw_one_coin(
+      (dy * PRECISION) / rates[1],
+      base_j,
+      base_amp,
+      base_rates,
+      _base_balances,
+      _base_totalSupply,
+      _base_fee
+    );
+  }
+
+  return dy;
 }
 
 // @view
