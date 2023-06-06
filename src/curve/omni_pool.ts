@@ -254,7 +254,7 @@ function get_y(i, j, x, xp) {
   throw Error("Y not converged");
 }
 
-function _xp_mem(_rates, _balances) {
+export function _xp_mem(_rates, _balances) {
   // def _xp_mem(_rates: uint256[N_COINS], _balances: uint256[N_COINS]) -> uint256[N_COINS]:
   //   result: uint256[N_COINS] = empty(uint256[N_COINS])
   //   for i in range(N_COINS):
@@ -269,7 +269,7 @@ function _xp_mem(_rates, _balances) {
   return result;
 }
 
-function get_dy(i, j, dx, balances, rates) {
+export function get_dy(i, j, dx, balances, rates) {
   // xp: uint256[N_COINS] = self._xp_mem(rates, self._balances())
   const xp: number[] = _xp_mem(rates, balances); // Given balances we get the adjusted balances here
 
