@@ -147,7 +147,7 @@ export function get_D(_xp, _amp) {
   throw Error("D not converged");
 }
 
-function get_y(i, j, x, xp) {
+export function get_y(i, j, x, xp) {
   // def get_y(i: int128, j: int128, x: uint256, xp: uint256[N_COINS]) -> uint256:
   //   """
   //   Calculate x[j] if one makes x[i] = x
@@ -287,3 +287,299 @@ export function get_dy(i, j, dx, balances, rates) {
 
   return ((dy - fee) * PRECISION) / rates[j];
 }
+
+// TODO: Port over base pool calc_token_amount
+// def calc_token_amount(amounts: uint256[N_COINS], is_deposit: bool) -> uint256:
+//     """
+//     @notice Calculate addition or reduction in token supply from a deposit or withdrawal
+//     @dev This calculation accounts for slippage, but not fees.
+//          Needed to prevent front-running, not for precise calculations!
+//     @param amounts Amount of each coin being deposited
+//     @param is_deposit set True for deposits, False for withdrawals
+//     @return Expected amount of LP tokens received
+//     """
+//     amp: uint256 = self._A()
+//     rates: uint256[N_COINS] = self._stored_rates()
+//     _balances: uint256[N_COINS] = self.balances
+//     D0: uint256 = self.get_D_mem(rates, _balances, amp)
+//     for i in range(N_COINS):
+//         _amount: uint256 = amounts[i]
+//         if is_deposit:
+//             _balances[i] += _amount
+//         else:
+//             _balances[i] -= _amount
+//     D1: uint256 = self.get_D_mem(rates, _balances, amp)
+//     token_amount: uint256 = ERC20(self.lp_token).totalSupply()
+//     diff: uint256 = 0
+//     if is_deposit:
+//         diff = D1 - D0
+//     else:
+//         diff = D0 - D1
+//     return diff * token_amount / D0
+export function calc_token_amount(
+  amounts,
+  is_deposit,
+  amp,
+  rates,
+  _balances,
+  totalSupply
+) {
+  const N_COINS = _balances.length; // TODO: Fix globals
+  //     amp: uint256 = self._A()
+  //     rates: uint256[N_COINS] = self._stored_rates()
+  //     _balances: uint256[N_COINS] = self.balances
+  //     D0: uint256 = self.get_D_mem(rates, _balances, amp)
+  const D0 = get_D_mem(rates, _balances, amp);
+
+  // for i in range(N_COINS):
+  //         _amount: uint256 = amounts[i]
+  //         if is_deposit:
+  //             _balances[i] += _amount
+  //         else:
+  //             _balances[i] -= _amount
+  for (let i = 0; i < _balances.length; i++) {
+    const _amount = amounts[i];
+    // TODO: pretty sure this breaks CANNOT MODIFY FUN PARAM
+    if (is_deposit) {
+      _balances[i] += _amount;
+    } else {
+      _balances[i] -= _amount;
+    }
+  }
+
+  //     D1: uint256 = self.get_D_mem(rates, _balances, amp)
+  //     token_amount: uint256 = ERC20(self.lp_token).totalSupply()
+  //     diff: uint256 = 0
+  //     if is_deposit:
+  //         diff = D1 - D0
+  //     else:
+  //         diff = D0 - D1
+  //     return diff * token_amount / D0
+  const D1 = get_D_mem(rates, _balances, amp);
+  const token_amount = totalSupply;
+  let diff = 0;
+  if (is_deposit) {
+    diff = D1 - D0;
+  } else {
+    diff = D0 - 1;
+  }
+
+  return (diff * token_amount) / D0;
+}
+
+/**
+ * NOTE
+ * @view
+@internal
+Just a way to convert to adjusted balances
+def get_D_mem(rates: uint256[N_COINS], _balances: uint256[N_COINS], amp: uint256) -> uint256:
+    result: uint256[N_COINS] = rates
+    for i in range(N_COINS):
+        result[i] = result[i] * _balances[i] / PRECISION
+    return self.get_D(result, amp)
+ */
+
+function get_D_mem(rates, balances, amp) {
+  const N_COINS = balances.length; // TODO: Fix globals
+  const result = rates;
+  for (let i = 0; i < result.length; i++) {
+    result[i] = (result[i] * balances[i]) / PRECISION;
+  }
+
+  return get_D(result, amp);
+}
+
+export function calc_withdraw_one_coin(
+  _burn_amount,
+  i,
+  amp,
+  rates,
+  balances,
+  totalSupply,
+  fee // TODO: Figure out FEE vs fee, esp in context of it being injected as global
+) {
+  //   amp: uint256 = self._A() // NOTE: it's a param
+  //   rates: uint256[N_COINS] = self.rate_multipliers
+  //   xp: uint256[N_COINS] = self._xp_mem(rates, self._balances())
+  //   D0: uint256 = self.get_D(xp, amp)
+  const xp = _xp_mem(rates, balances);
+  const D0 = get_D(xp, amp);
+
+  //   total_supply: uint256 = self.totalSupply // NOTE: it's a param
+  //   D1: uint256 = D0 - _burn_amount * D0 / total_supply
+  //   new_y: uint256 = self.get_y_D(amp, i, xp, D1)
+  const D1 = D0 - (_burn_amount * D0) / totalSupply;
+  const new_y = get_y_D(amp, i, xp, D1);
+
+  //   base_fee: uint256 = self.fee * N_COINS / (4 * (N_COINS - 1))
+  const base_fee = (fee * N_COINS) / (4 * (N_COINS - 1));
+  //   xp_reduced: uint256[N_COINS] = empty(uint256[N_COINS])
+  const xp_reduced = [];
+
+  //   for j in range(N_COINS):
+  //       dx_expected: uint256 = 0
+  //       xp_j: uint256 = xp[j]
+  //       if j == i:
+  //           dx_expected = xp_j * D1 / D0 - new_y
+  //       else:
+  //           dx_expected = xp_j - xp_j * D1 / D0
+  //       xp_reduced[j] = xp_j - base_fee * dx_expected / FEE_DENOMINATOR
+  for (let j = 0; j < N_COINS; j++) {
+    let dx_expected = 0;
+    const xp_j = xp[j];
+
+    if (j == i) {
+      dx_expected = (xp_j * D1) / D0 - new_y;
+    } else {
+      dx_expected = xp_j - (xp_j * D1) / D0;
+    }
+    xp_reduced[j] = xp_j - (base_fee * dx_expected) / FEE_DENOMINATOR;
+  }
+
+  //   dy: uint256 = xp_reduced[i] - self.get_y_D(amp, i, xp_reduced, D1)
+  //   dy_0: uint256 = (xp[i] - new_y) * PRECISION / rates[i]  # w/o fees
+  //   dy = (dy - 1) * PRECISION / rates[i]  # Withdraw less to account for rounding errors
+  let dy = xp_reduced[i] - get_y_D(amp, i, xp_reduced, D1);
+  const dy_0 = ((xp[i] - new_y) * PRECISION) / rates[i]; // NOTE: unused
+  dy = ((dy - 1) * PRECISION) / rates[i];
+
+  return dy;
+}
+
+// def _calc_withdraw_one_coin(_burn_amount: uint256, i: int128) -> uint256[2]:
+//   # First, need to calculate
+//   # * Get current D
+//   # * Solve Eqn against y_i for D - _token_amount
+//   amp: uint256 = self._A()
+//   rates: uint256[N_COINS] = self.rate_multipliers
+//   xp: uint256[N_COINS] = self._xp_mem(rates, self._balances())
+//   D0: uint256 = self.get_D(xp, amp)
+
+//   total_supply: uint256 = self.totalSupply
+//   D1: uint256 = D0 - _burn_amount * D0 / total_supply
+//   new_y: uint256 = self.get_y_D(amp, i, xp, D1)
+
+//   base_fee: uint256 = self.fee * N_COINS / (4 * (N_COINS - 1))
+//   xp_reduced: uint256[N_COINS] = empty(uint256[N_COINS])
+
+//   for j in range(N_COINS):
+//       dx_expected: uint256 = 0
+//       xp_j: uint256 = xp[j]
+//       if j == i:
+//           dx_expected = xp_j * D1 / D0 - new_y
+//       else:
+//           dx_expected = xp_j - xp_j * D1 / D0
+//       xp_reduced[j] = xp_j - base_fee * dx_expected / FEE_DENOMINATOR
+
+//   dy: uint256 = xp_reduced[i] - self.get_y_D(amp, i, xp_reduced, D1)
+//   dy_0: uint256 = (xp[i] - new_y) * PRECISION / rates[i]  # w/o fees
+//   dy = (dy - 1) * PRECISION / rates[i]  # Withdraw less to account for rounding errors
+
+//   return [dy, dy_0 - dy]
+
+function get_y_D(A, i, xp, D) {
+  const N_COINS = xp.length;
+  // A
+  //     assert i >= 0  # dev: i below zero
+  //     assert i < N_COINS  # dev: i above N_COINS
+  if (i < 0) {
+    throw Error("i");
+  }
+
+  if (i >= N_COINS) {
+    throw Error("i");
+  }
+  // B
+  //     S_: uint256 = 0
+  //     _x: uint256 = 0
+  //     y_prev: uint256 = 0
+  //     c: uint256 = D
+  //     Ann: uint256 = A * N_COINS
+
+  let S_ = 0;
+  let _x = 0;
+  let y_prev = 0;
+  let c = D;
+  const Ann = A * N_COINS;
+  // C
+  //     for _i in range(N_COINS):
+  //         if _i != i:
+  //             _x = xp[_i]
+  //         else:
+  //             continue
+  //         S_ += _x
+  //         c = c * D / (_x * N_COINS)
+  for (let _i = 0; _i < N_COINS; _i++) {
+    if (_i == i) {
+      _x = xp[i];
+    } else {
+      continue;
+    }
+
+    S_ += _x;
+    c = (c * D) / (_x * N_COINS);
+  }
+  // D
+  //     c = c * D * A_PRECISION / (Ann * N_COINS)
+  //     b: uint256 = S_ + D * A_PRECISION / Ann
+  //     y: uint256 = D
+  c = (c * D * A_PRECISION) / (Ann * N_COINS);
+  const b = S_ + (D * A_PRECISION) / Ann;
+  let y = D;
+  // E
+  for (let _i = 0; _i < 255; _i++) {
+    y_prev = y;
+    y = (y * y + c) / (2 * y + b - D);
+
+    // NOTE: IN TS we have more margin for error
+    if (Math.abs(y - y_prev) < MARGIN_OF_ERROR_FOR_CONVERGENCE) {
+      return y;
+    }
+  }
+
+  throw Error("Y not converged");
+}
+// def get_y_D(A: uint256, i: int128, xp: uint256[N_COINS], D: uint256) -> uint256:
+//     """
+//     Calculate x[i] if one reduces D from being calculated for xp to D
+
+//     Done by solving quadratic equation iteratively.
+//     x_1**2 + x_1 * (sum' - (A*n**n - 1) * D / (A * n**n)) = D ** (n + 1) / (n ** (2 * n) * prod' * A)
+//     x_1**2 + b*x_1 = c
+
+//     x_1 = (x_1**2 + c) / (2*x_1 + b)
+//     """
+//     # x in the input is converted to the same price/precision
+// A
+//     assert i >= 0  # dev: i below zero
+//     assert i < N_COINS  # dev: i above N_COINS
+// B
+//     S_: uint256 = 0
+//     _x: uint256 = 0
+//     y_prev: uint256 = 0
+//     c: uint256 = D
+//     Ann: uint256 = A * N_COINS
+// C
+//     for _i in range(N_COINS):
+//         if _i != i:
+//             _x = xp[_i]
+//         else:
+//             continue
+//         S_ += _x
+//         c = c * D / (_x * N_COINS)
+// D
+//     c = c * D * A_PRECISION / (Ann * N_COINS)
+//     b: uint256 = S_ + D * A_PRECISION / Ann
+//     y: uint256 = D
+// E
+//     for _i in range(255):
+//         y_prev = y
+//         y = (y*y + c) / (2 * y + b - D)
+//         # Equality with the precision of 1
+//         if y > y_prev:
+//             if y - y_prev <= 1:
+//                 return y
+//         else:
+//             if y_prev - y <= 1:
+//                 return y
+//     raise

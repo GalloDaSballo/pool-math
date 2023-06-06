@@ -2,6 +2,8 @@ import { makeAmountOutFunction } from "./make";
 
 const comparable = (val) => Math.floor(val / 1e8);
 
+/** TESTS for CURVE OMINPOOL */
+
 /**
  * 
  Logs:
