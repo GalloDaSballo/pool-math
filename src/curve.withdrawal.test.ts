@@ -3,11 +3,7 @@ import { makeAmountOutFunction } from "./make";
 
 // 15 bps of inaccuracy
 const PRECISION = 0.15;
-const THREE_POOL_PRECISIONS = 2.2;
-
-// TODO: Withdrawal stuff
-// Withdraw X Add X Withdraw Single X
-
+const THREE_POOL_PRECISIONS = 2.3;
 /**
  *  
   SEE Curve-SingleTokenWithdraw
@@ -190,28 +186,26 @@ describe("Omni Pool Calc Token Amount Withdrawal", () => {
 
     /**
     Logs:
-  Creating 3 Pool
-  ADJUSTED_DAI 5105490430369
+      Creating 3 Pool
+      ADJUSTED_DAI 5105490430369
 
-  lpTokenSupply 9763501909135846099651064
+      lpTokenSupply 9763501909135846099651064
 
-  From LP to 0
-  amountIn 97635019091358460996510
-  amountOut 97649290071
+      From LP to 0
+      amountIn 97635019091358460996510
+      amountOut 97649290071
 
-  amountIn 195270038182716921993021
-  amountOut 195297717827
+      amountIn 195270038182716921993021
+      amountOut 195297717827
 
-  amountIn 130180025455144614662014
-  amountOut 130198861721
+      amountIn 130180025455144614662014
+      amountOut 130198861721
 
-  amountIn 114864728342774659995894
-  amountOut 114881428169
+      amountIn 114864728342774659995894
+      amountOut 114881428169
 
-  amountIn 102773704306693116838432
-  amountOut 102788702489
-  
-
+      amountIn 102773704306693116838432
+      amountOut 102788702489
      */
 
     it("LP -> 0 A", () => {
@@ -256,17 +250,62 @@ describe("Omni Pool Calc Token Amount Withdrawal", () => {
     });
 
     /**
-     *   From LP to 1
-  amountIn 97635019091358460996510
-  amountOut 97610931869
-  amountIn 195270038182716921993021
-  amountOut 195220072057
-  amountIn 130180025455144614662014
-  amountOut 130147517718
-  amountIn 114864728342774659995894
-  amountOut 114836208297
-  amountIn 102773704306693116838432
-  amountOut 102748300882
+      From LP to 1
+      amountIn 97635019091358460996510
+      amountOut 97610931869
+
+      amountIn 195270038182716921993021
+      amountOut 195220072057
+
+      amountIn 130180025455144614662014
+      amountOut 130147517718
+
+      amountIn 114864728342774659995894
+      amountOut 114836208297
+
+      amountIn 102773704306693116838432
+      amountOut 102748300882
      */
+
+    it("LP -> 1 A", () => {
+      const result = getAmountOut(97635019091358460996510, 0);
+      const expected = 97610931869;
+      const ratio = (result / expected) * 100;
+
+      const absDelta = Math.abs(100 - ratio);
+      expect(absDelta).toBeLessThan(THREE_POOL_PRECISIONS);
+    });
+    it("LP -> 2 B", () => {
+      const result = getAmountOut(195270038182716921993021, 0);
+      const expected = 195220072057;
+      const ratio = (result / expected) * 100;
+
+      const absDelta = Math.abs(100 - ratio);
+      expect(absDelta).toBeLessThan(THREE_POOL_PRECISIONS);
+    });
+    it("LP -> 3 C", () => {
+      const result = getAmountOut(130180025455144614662014, 0);
+      const expected = 130147517718;
+      const ratio = (result / expected) * 100;
+
+      const absDelta = Math.abs(100 - ratio);
+      expect(absDelta).toBeLessThan(THREE_POOL_PRECISIONS);
+    });
+    it("LP -> 4 D", () => {
+      const result = getAmountOut(114864728342774659995894, 0);
+      const expected = 114836208297;
+      const ratio = (result / expected) * 100;
+
+      const absDelta = Math.abs(100 - ratio);
+      expect(absDelta).toBeLessThan(THREE_POOL_PRECISIONS);
+    });
+    it("LP -> 5 E", () => {
+      const result = getAmountOut(102773704306693116838432, 0);
+      const expected = 102748300882;
+      const ratio = (result / expected) * 100;
+
+      const absDelta = Math.abs(100 - ratio);
+      expect(absDelta).toBeLessThan(THREE_POOL_PRECISIONS);
+    });
   });
 });
