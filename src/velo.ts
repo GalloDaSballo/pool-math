@@ -136,3 +136,65 @@ function getAmountOutInternal(
 //     false
 //   )
 // );
+
+// Given LP token, returns balances you'd get if burning
+export function getBurnOut(
+  amountIn: number,
+  reserves: number[],
+  totalSupply: number
+): number[] {
+  const balance0 = reserves[0];
+  const balance1 = reserves[0];
+  const liquidity = amountIn; // Liquidity is what we sent to burn
+
+  const amount0 = (liquidity * balance0) / totalSupply;
+  const amount1 = (liquidity * balance1) / totalSupply;
+
+  return [amount0, amount1];
+}
+
+// Given LP Token, returns balances you'd get if burning and then swapping to one token
+// Only way to do single sided for Velo
+export function withdrawSingleSided(
+  amountIn,
+  reserves,
+  totalSupply,
+  stable,
+  customDecimals
+) {
+  const balancesOut = getBurnOut(amountIn, reserves, totalSupply);
+
+  const newBalances = reserves.map((r, i) => r - balancesOut[i]);
+
+  // Let's swap from 1 to 0
+  const totalOneToken = getAmountOut(
+    newBalances[1],
+    newBalances[0],
+    newBalances[1],
+    stable,
+    customDecimals
+  );
+
+  return totalOneToken;
+}
+
+// function burn(address to) external lock returns (uint amount0, uint amount1) {
+//   (uint _reserve0, uint _reserve1) = (reserve0, reserve1);
+//   (address _token0, address _token1) = (token0, token1);
+//   uint _balance0 = IERC20(_token0).balanceOf(address(this));
+//   uint _balance1 = IERC20(_token1).balanceOf(address(this));
+//   uint _liquidity = balanceOf[address(this)];
+
+//   uint _totalSupply = totalSupply; // gas savings, must be defined here since totalSupply can update in _mintFee
+//   amount0 = _liquidity * _balance0 / _totalSupply; // using balances ensures pro-rata distribution
+//   amount1 = _liquidity * _balance1 / _totalSupply; // using balances ensures pro-rata distribution
+//   require(amount0 > 0 && amount1 > 0, 'ILB'); // Pair: INSUFFICIENT_LIQUIDITY_BURNED
+//   _burn(address(this), _liquidity);
+//   _safeTransfer(_token0, to, amount0);
+//   _safeTransfer(_token1, to, amount1);
+//   _balance0 = IERC20(_token0).balanceOf(address(this));
+//   _balance1 = IERC20(_token1).balanceOf(address(this));
+
+//   _update(_balance0, _balance1, _reserve0, _reserve1);
+//   emit Burn(msg.sender, amount0, amount1, to);
+// }
