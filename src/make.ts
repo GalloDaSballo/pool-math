@@ -1,4 +1,5 @@
-import { getAmountOut as CurveGetAmoutOut } from "./curve/omni_pool";
+import { getAmountOut as curveGetAmoutOut } from "./curve/omni_pool";
+// import { getAmountOut as curveMetaAmountOut } from "./curve/meta_stable"; // TODO: Need to figure this out
 import { getAmountOut as balGetAmountOut } from "./balancer";
 import { getAmountOut as veloGetAmountOut } from "./velo";
 
@@ -49,7 +50,7 @@ export const makeAmountOutGivenReservesFunction = (
 
   if (type === "Curve") {
     return (amountIn, reserves) => {
-      return CurveGetAmoutOut(
+      return curveGetAmoutOut(
         amountIn,
         reserves,
         true,

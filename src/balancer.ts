@@ -1,5 +1,5 @@
 import { BigNumber } from "bignumber.js";
-import { _calcOutGivenIn } from "./bal/bal-math";
+import { _calcOutGivenIn, _calcTokenOutGivenExactBptIn } from "./bal/bal-math";
 
 // NOTE: This is for stable math
 
@@ -123,4 +123,34 @@ export function getAmountOut(
       tokenInDecimals
     )
   );
+}
+
+/**
+ * Given params returns the amount of single token you'd get if performing a once sided withdrawal
+ */
+export function getSingleSidedWithdrawalOut(
+  amountIn: number,
+  reserveIn: number,
+  reserveOut: number,
+  amplificationParameter: number = DEFAUT_A,
+  swapFeePercentage: number = DEFAUT_FEE,
+  customRates: number[] = [1e18, 1e18],
+  totalSupply: number
+): number {
+  if (customRates[0] != 1e18 || customRates[1] != 1e18) {
+    amountIn = (amountIn * customRates[0]) / 1e18;
+    reserveIn = (reserveIn * customRates[0]) / 1e18;
+    reserveOut = (reserveOut * customRates[1]) / 1e18;
+  }
+
+  const out = _calcTokenOutGivenExactBptIn(
+    BigNumber(amplificationParameter),
+    [BigNumber(reserveIn), BigNumber(reserveOut)],
+    0,
+    BigNumber(amountIn),
+    BigNumber(totalSupply),
+    BigNumber(swapFeePercentage)
+  );
+
+  return parseInt(out.toString(), 10);
 }

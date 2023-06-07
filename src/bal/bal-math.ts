@@ -383,6 +383,7 @@ export const _calcBptInGivenExactTokensOut = (
   return fp.mulUp(bptTotalSupply, fp.complement(invariantRatio));
 };
 
+// TODO: USE THIS FOR AMOUNT OUT
 export const _calcTokenOutGivenExactBptIn = (
   amp: BigNumber,
   balances: BigNumber[],
