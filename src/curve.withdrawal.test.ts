@@ -181,7 +181,7 @@ describe("Omni Pool Calc Token Amount Withdrawal", () => {
         amtIn,
         i,
         A,
-        [1e18, 1e18, 1e18],
+        [1e30, 1e30, 1e30],
         [5105490430369, 2899439195495, 1759099131964],
         totalSupply,
         STABLE_FEES
