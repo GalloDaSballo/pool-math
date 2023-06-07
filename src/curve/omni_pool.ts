@@ -8,7 +8,6 @@
 
 // NOTE: Dirty hack, we edit this value in `getAmountOut`
 let N_COINS = 2;
-let MAX_COIN = N_COINS - 1;
 let FEE = 4000000;
 let A = 50000;
 // NOTE: Because these globally scoped variables are set at each call of `getAmountOut` this ends up being fine
@@ -19,7 +18,7 @@ const FEE_DENOMINATOR = 1e10;
 
 const A_PRECISION = 100;
 
-const MARGIN_OF_ERROR_FOR_CONVERGENCE = 1e10;
+const MARGIN_OF_ERROR_FOR_CONVERGENCE = 1e8;
 
 const two_pool_rates = [
   1000000000000000000000000000000,
@@ -59,7 +58,6 @@ export function getAmountOut(
     }
   }
   N_COINS = reserves.length;
-  MAX_COIN = N_COINS - 1;
 
   FEE = override_fee;
   A = override_a;
@@ -288,7 +286,6 @@ export function get_dy(i, j, dx, balances, rates) {
   return ((dy - fee) * PRECISION) / rates[j];
 }
 
-// TODO: Port over base pool calc_token_amount
 // def calc_token_amount(amounts: uint256[N_COINS], is_deposit: bool) -> uint256:
 //     """
 //     @notice Calculate addition or reduction in token supply from a deposit or withdrawal
@@ -337,7 +334,7 @@ export function calc_token_amount(
   //             _balances[i] += _amount
   //         else:
   //             _balances[i] -= _amount
-  for (let i = 0; i < _balances.length; i++) {
+  for (let i = 0; i < N_COINS; i++) {
     const _amount = amounts[i];
     // TODO: pretty sure this breaks CANNOT MODIFY FUN PARAM
     if (is_deposit) {
@@ -365,6 +362,18 @@ export function calc_token_amount(
   }
 
   return (diff * token_amount) / D0;
+}
+
+// NOTE: If you need to calculate returns from withdrawing, it's that simple
+export function calc_remove_liquidity(burn_amount, balances, total_supply) {
+  const return_amounts = balances.map((old_balance) =>
+    Math.floor((old_balance * burn_amount) / total_supply)
+  ); // 0 values array of N_COINS
+
+  /**
+   * value: uint256 = old_balance * _burn_amount / total_supply
+   */
+  return return_amounts;
 }
 
 /**
@@ -398,6 +407,9 @@ export function calc_withdraw_one_coin(
   totalSupply,
   fee // TODO: Figure out FEE vs fee, esp in context of it being injected as global
 ) {
+  // TODO: Can prob be removed
+  FEE = fee;
+  A = amp;
   //   amp: uint256 = self._A() // NOTE: it's a param
   //   rates: uint256[N_COINS] = self.rate_multipliers
   //   xp: uint256[N_COINS] = self._xp_mem(rates, self._balances())
@@ -408,13 +420,14 @@ export function calc_withdraw_one_coin(
   //   total_supply: uint256 = self.totalSupply // NOTE: it's a param
   //   D1: uint256 = D0 - _burn_amount * D0 / total_supply
   //   new_y: uint256 = self.get_y_D(amp, i, xp, D1)
-  const D1 = D0 - (_burn_amount * D0) / totalSupply;
+  const D1 = D0 - Math.floor((_burn_amount * D0) / totalSupply);
+
   const new_y = get_y_D(amp, i, xp, D1);
 
   //   base_fee: uint256 = self.fee * N_COINS / (4 * (N_COINS - 1))
   const base_fee = (fee * N_COINS) / (4 * (N_COINS - 1));
   //   xp_reduced: uint256[N_COINS] = empty(uint256[N_COINS])
-  const xp_reduced = [];
+  const xp_reduced = rates.map((r) => r - r); // 0 array
 
   //   for j in range(N_COINS):
   //       dx_expected: uint256 = 0
@@ -510,8 +523,8 @@ function get_y_D(A, i, xp, D) {
   //         S_ += _x
   //         c = c * D / (_x * N_COINS)
   for (let _i = 0; _i < N_COINS; _i++) {
-    if (_i == i) {
-      _x = xp[i];
+    if (_i !== i) {
+      _x = xp[_i];
     } else {
       continue;
     }
