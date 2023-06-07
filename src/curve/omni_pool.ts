@@ -389,7 +389,6 @@ def get_D_mem(rates: uint256[N_COINS], _balances: uint256[N_COINS], amp: uint256
  */
 
 function get_D_mem(rates, balances, amp) {
-  const N_COINS = balances.length; // TODO: Fix globals
   const result = rates;
   for (let i = 0; i < result.length; i++) {
     result[i] = (result[i] * balances[i]) / PRECISION;
@@ -407,9 +406,11 @@ export function calc_withdraw_one_coin(
   totalSupply,
   fee // TODO: Figure out FEE vs fee, esp in context of it being injected as global
 ) {
-  // TODO: Can prob be removed
+  // TODO: FIX GLOBALS
   FEE = fee;
   A = amp;
+  N_COINS = balances.length;
+
   //   amp: uint256 = self._A() // NOTE: it's a param
   //   rates: uint256[N_COINS] = self.rate_multipliers
   //   xp: uint256[N_COINS] = self._xp_mem(rates, self._balances())
@@ -530,14 +531,14 @@ function get_y_D(A, i, xp, D) {
     }
 
     S_ += _x;
-    c = (c * D) / (_x * N_COINS);
+    c = Math.floor((c * D) / (_x * N_COINS));
   }
   // D
   //     c = c * D * A_PRECISION / (Ann * N_COINS)
   //     b: uint256 = S_ + D * A_PRECISION / Ann
   //     y: uint256 = D
-  c = (c * D * A_PRECISION) / (Ann * N_COINS);
-  const b = S_ + (D * A_PRECISION) / Ann;
+  c = Math.floor((c * D * A_PRECISION) / (Ann * N_COINS));
+  const b = S_ + Math.floor((D * A_PRECISION) / Ann);
   let y = D;
   // E
   for (let _i = 0; _i < 255; _i++) {
