@@ -28,7 +28,7 @@ const SAMPLE_RATES = [1e18, 1018222424688284241];
 // 1 -> 0
 // Cost of Deposit One Coin -> Swap
 // Deposit one coin = calc_token_amount
-
+// TODO: Why no custom A?
 function get_dy_underlying(
   i,
   j,
@@ -194,3 +194,4 @@ function get_dy_underlying(
 //         dy = Curve(BASE_POOL).calc_withdraw_one_coin(dy * PRECISION / rates[1], base_j)
 
 //     return dy
+export default get_dy_underlying;
