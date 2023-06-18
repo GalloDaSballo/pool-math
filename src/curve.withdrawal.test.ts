@@ -4,7 +4,7 @@ import { makeAmountOutFunction } from "./make";
 // 15 bps of inaccuracy
 const PRECISION = 0.15;
 // 2.3 % Inaccurate
-const THREE_POOL_PRECISIONS = 2.3;
+const THREE_POOL_PRECISIONS = 0.15;
 /**
  *  
   SEE Curve-SingleTokenWithdraw
@@ -159,8 +159,8 @@ describe("Omni Pool Calc Token Amount Withdrawal", () => {
 
 describe("Omni Pool Calc Token Amount Withdrawal", () => {
   describe("Curve 3 Pool", () => {
-    const STABLE_FEES = 4000000;
-    const A = 2000;
+    const STABLE_FEES = 100000;
+    const A = 200000;
     const totalSupply = 9763501909135846099651064;
 
     // uint256 DAI_IN = 5105490430369593570566334;
