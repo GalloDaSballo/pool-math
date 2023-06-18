@@ -1,6 +1,6 @@
 import { makeAmountOutFunction } from "./make";
 
-const comparable = (val) => Math.floor(val / 1e8);
+const comparable = (val) => Math.floor(val / 1e24);
 
 /** META STABLE
  * NOTE: These fail

@@ -102,3 +102,5 @@ export const makeAmountOutFunctionAfterProvidingReserves = (
 ) => {
   return (amountIn) => makeAmountOutGivenReserves(amountIn, reserves);
 };
+
+// TODO: Make single sided withdrawal function that is basically same as getAmountOut
