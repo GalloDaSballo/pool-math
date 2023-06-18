@@ -30,7 +30,7 @@ const comparable = (val) => Math.floor(val / 1e24);
   1018234912848822794
  */
 
-describe("Basic Meta Swap Tests (fail due to rounding", () => {
+describe("Basic Meta Swap Tests", () => {
   describe("Curve sUSD 3Pool", () => {
     const reserves_sUSD_3CRV = [
       11042398450774368117151260, // sUSD
