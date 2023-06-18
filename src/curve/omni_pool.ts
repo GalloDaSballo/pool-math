@@ -78,9 +78,9 @@ export function get_D(_xp, _amp) {
   let S = 0;
 
   //   for x in _xp:
-  for (const x of _xp) {
+  for (const _x of _xp) {
     // S += x
-    S += x;
+    S += _x;
   }
 
   if (S == 0) {
@@ -100,12 +100,12 @@ export function get_D(_xp, _amp) {
     let D_P = D;
 
     // for x in _xp:
-    for (const x of _xp) {
-      if (x == 0) {
+    for (const _x of _xp) {
+      if (_x == 0) {
         throw Error("zero div");
       }
 
-      D_P = (D_P * D) / (x * N_COINS); // # If division by 0, this will be borked: only withdrawal will work. And that is good
+      D_P = (D_P * D) / (_x * N_COINS); // # If division by 0, this will be borked: only withdrawal will work. And that is good
     }
 
     // Dprev: uint256 = D
@@ -281,9 +281,9 @@ export function get_dy(i, j, dx, balances, rates) {
   const dy = xp[j] - y - 1;
 
   // fee: uint256 = self.fee * dy / FEE_DENOMINATOR
-  const fee = (FEE * dy) / FEE_DENOMINATOR;
+  const fee = Math.floor((FEE * dy) / FEE_DENOMINATOR);
 
-  return ((dy - fee) * PRECISION) / rates[j];
+  return Math.floor(((dy - fee) * PRECISION) / rates[j]);
 }
 
 // def calc_token_amount(amounts: uint256[N_COINS], is_deposit: bool) -> uint256:

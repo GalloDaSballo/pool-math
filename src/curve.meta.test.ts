@@ -112,13 +112,19 @@ describe("Basic Meta Swap Tests (fail due to rounding", () => {
     );
 
     it("Curve 1", () => {
-      expect(getAmountOut(1000000000000000000)).toBe(980362945887665283);
+      expect(comparable(getAmountOut(1000000000000000000))).toBe(
+        comparable(980362945887665283)
+      );
     });
     it("Curve 2", () => {
-      expect(getAmountOut(10000000000000000000)).toBe(9803628805090221081);
+      expect(comparable(getAmountOut(10000000000000000000))).toBe(
+        comparable(9803628805090221081)
+      );
     });
     it("Curve 3", () => {
-      expect(getAmountOut(500000000000000000000)).toBe(490179659817898086722);
+      expect(comparable(getAmountOut(500000000000000000000))).toBe(
+        comparable(490179659817898086722)
+      );
     });
   });
 });

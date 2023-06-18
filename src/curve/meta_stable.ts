@@ -20,7 +20,6 @@ const PRECISION = 1e18;
 
 // Rate 1 is basically that
 // Rate 2 is get_virtual_price() // from 3crv
-const SAMPLE_RATES = [1e18, 1018222424688284241];
 
 // 0 -> 1
 // Swap + Cost of Withdraw One Coin
