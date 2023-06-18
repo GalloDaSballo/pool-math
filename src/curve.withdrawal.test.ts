@@ -3,6 +3,7 @@ import { makeAmountOutFunction } from "./make";
 
 // 15 bps of inaccuracy
 const PRECISION = 0.15;
+// 2.3 % Inaccurate
 const THREE_POOL_PRECISIONS = 2.3;
 /**
  *  
