@@ -64,6 +64,31 @@ export function getAmountOut(
   return Math.floor(get_dy(0, 1, tokenIn, reserves, rates));
 }
 
+export function getWithdrawOneCoin(
+  burnAmount,
+  balances,
+  i,
+  totalSupply,
+  stable = true,
+  override_rates = [],
+  override_fee = FEE,
+  override_a = A
+) {
+  if (stable != true) {
+    throw Error("This is curve ser");
+  }
+
+  return calc_withdraw_one_coin(
+    burnAmount,
+    i,
+    override_a,
+    override_rates,
+    balances,
+    totalSupply,
+    override_fee
+  );
+}
+
 export function get_D(_xp, _amp) {
   // def get_D(_xp: uint256[N_COINS], _amp: uint256) -> uint256:
   //   """

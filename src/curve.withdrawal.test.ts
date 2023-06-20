@@ -1,5 +1,4 @@
-import { calc_token_amount, calc_withdraw_one_coin } from "./curve/omni_pool";
-import { makeAmountOutFunction } from "./make";
+import { calc_withdraw_one_coin } from "./curve/omni_pool";
 
 // 15 bps of inaccuracy
 const PRECISION = 0.15;
