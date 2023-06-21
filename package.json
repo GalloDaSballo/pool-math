@@ -10,6 +10,7 @@
   "main": "lib/index.js",
   "license": "MIT",
   "scripts": {
+    "attack": "ts-node src/attack.ts",
     "velo": "ts-node src/velo.ts",
     "meta": "ts-node src/meta.ts",
     "curve": "ts-node src/curve.ts",
