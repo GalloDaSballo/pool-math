@@ -6,7 +6,7 @@ import { calc_withdraw_one_coin } from "./curve/omni_pool";
 import {
   makeSingleSidedWithdrawalFunctionAfterProvidingReserves,
   makeSingleSidedWithdrawalFunction,
-  makeSingleSidedWithdrawalGivenReservesAndTotalSupplyFunction,
+  makeSingleSidedWithdrawalGivenReserves,
 } from "./make";
 
 describe("makeSingleSidedWithdrawalFunction and makeSingleSidedWithdrawalFunctionAfterProvidingReserves are the same and they are as accurate", () => {
@@ -49,11 +49,11 @@ describe("makeSingleSidedWithdrawalFunction and makeSingleSidedWithdrawalFunctio
     expect(amountOutFromReference).toBe(amountOutFromMake);
   });
 
-  // TODO: ?????
   it("Curve 2 Pool makeSingleSidedWithdrawalFunctionAfterProvidingReserves vs reference data from - LP -> 0 C", () => {
-    const getAmountFirstFunction = makeSingleSidedWithdrawalGivenReservesAndTotalSupplyFunction(
+    const getAmountFirstFunction = makeSingleSidedWithdrawalGivenReserves(
       "Curve",
       true,
+      totalSupply,
       {
         customRates: rates,
         customA: A,
@@ -62,8 +62,7 @@ describe("makeSingleSidedWithdrawalFunction and makeSingleSidedWithdrawalFunctio
     );
     const amountOutMakeFunction = makeSingleSidedWithdrawalFunctionAfterProvidingReserves(
       getAmountFirstFunction,
-      balances,
-      totalSupply
+      balances
     );
 
     const amountOutFromReference = referenceGetAmountOut(AMT_IN, 0);

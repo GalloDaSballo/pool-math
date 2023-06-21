@@ -36,6 +36,7 @@ const getCurveRates = (length: number, customRates?: number[]): number[] => {
     : NORMALIZED_CURVE_RATES_THREE; // RATES
 };
 
+// TODO: tokenIn, tokenOut
 export const makeAmountOutGivenReservesFunction = (
   type: string,
   stable: boolean,
@@ -72,7 +73,6 @@ export const makeAmountOutGivenReservesFunction = (
 
   if (type === "Balancer") {
     return (amountIn, reserves) => {
-      // TODO: Rate providers here as well (technically also fees and A)
       return balGetAmountOut(
         amountIn,
         reserves[0],
@@ -87,6 +87,7 @@ export const makeAmountOutGivenReservesFunction = (
   }
 };
 
+// TODO: TokenIn TokenOut
 export const makeAmountOutFunction = (
   type: string,
   reserves,
@@ -112,9 +113,10 @@ export const makeAmountOutFunctionAfterProvidingReserves = (
   return (amountIn) => makeAmountOutGivenReserves(amountIn, reserves);
 };
 
-export const makeSingleSidedWithdrawalGivenReservesAndTotalSupplyFunction = (
+export const makeSingleSidedWithdrawalGivenReserves = (
   type: string,
   stable: boolean,
+  totalSupply: number,
   extraSettings?: ExtraSettings
 ) => {
   // hack to bypass the type check
@@ -122,7 +124,7 @@ export const makeSingleSidedWithdrawalGivenReservesAndTotalSupplyFunction = (
     throw Error("Wrong Type");
   }
   if (type === "Velo") {
-    return (amountIn, reserves, totalSupply) => {
+    return (amountIn, reserves) => {
       return veloWithdrawSingleSided(
         amountIn,
         reserves,
@@ -134,7 +136,7 @@ export const makeSingleSidedWithdrawalGivenReservesAndTotalSupplyFunction = (
   }
 
   if (type === "Curve") {
-    return (amountIn, reserve, totalSupply) => {
+    return (amountIn, reserve) => {
       return curveWithdrawSingleSided(
         amountIn,
         reserve,
@@ -149,7 +151,7 @@ export const makeSingleSidedWithdrawalGivenReservesAndTotalSupplyFunction = (
   }
 
   if (type === "Balancer") {
-    return (amountIn, reserves, totalSupply) => {
+    return (amountIn, reserves) => {
       return balWithdrawSingleSided(
         amountIn,
         reserves[0], // TODO: Figure out the reserves stuff cause it's pretty sus
@@ -165,35 +167,31 @@ export const makeSingleSidedWithdrawalGivenReservesAndTotalSupplyFunction = (
 
 export const makeSingleSidedWithdrawalFunctionAfterProvidingReserves = (
   makeSingleSidedWithdrawalGivenReservesAndTotalSupply,
-  reserves,
-  totalSupply
+  reserves
 ) => {
   return (lpAmountIn) =>
-    makeSingleSidedWithdrawalGivenReservesAndTotalSupply(
-      lpAmountIn,
-      reserves,
-      totalSupply
-    );
+    makeSingleSidedWithdrawalGivenReservesAndTotalSupply(lpAmountIn, reserves);
 };
 
 export const makeSingleSidedWithdrawalFunction = (
   type: string,
-  reserves,
-  stable,
-  totalSupply,
+  reserves: number[],
+  stable: boolean,
+  totalSupply: number,
   extraSettings?: ExtraSettings
 ) => {
   // hack to bypass the type check
   if (type !== "Velo" && type !== "Curve" && type !== "Balancer") {
     throw Error("Wrong Type");
   }
-  const fn = makeSingleSidedWithdrawalGivenReservesAndTotalSupplyFunction(
+  const fn = makeSingleSidedWithdrawalGivenReserves(
     type,
     stable,
+    totalSupply,
     extraSettings
   );
   const adjusted = (amountIn) => {
-    return fn(amountIn, reserves, totalSupply);
+    return fn(amountIn, reserves);
   };
 
   return adjusted;
