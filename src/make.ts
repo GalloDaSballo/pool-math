@@ -63,6 +63,24 @@ const sortReserves = (
   return newReserves;
 };
 
+/**
+ * Given reserves and tokenOutIndex, let's swap 0 with tokenOut
+ * @param reserves
+ * @param tokenOutIndex
+ */
+const swapReserves = (reserves: number[], tokenOutIndex = 0): number[] => {
+  if (tokenOutIndex === 0) {
+    return reserves;
+  }
+
+  const copiedReserves = JSON.parse(JSON.stringify(reserves));
+  const copiedZero = reserves[0];
+  copiedReserves[0] = copiedReserves[tokenOutIndex];
+  copiedReserves[tokenOutIndex] = copiedZero;
+
+  return copiedReserves;
+};
+
 const getCurveRates = (length: number, customRates?: number[]): number[] => {
   if (customRates) {
     return customRates;
@@ -142,7 +160,6 @@ export const makeAmountOutGivenReservesFunction = (
   }
 };
 
-// TODO: TokenIn TokenOut
 export const makeAmountOutFunction = (
   type: string,
   reserves,
@@ -180,7 +197,8 @@ export const makeSingleSidedWithdrawalGivenReserves = (
   type: string,
   stable: boolean,
   totalSupply: number,
-  extraSettings?: ExtraSettings
+  extraSettings?: ExtraSettings,
+  tokenOutIndex = 0
 ) => {
   // hack to bypass the type check
   if (type !== "Velo" && type !== "Curve" && type !== "Balancer") {
@@ -188,9 +206,10 @@ export const makeSingleSidedWithdrawalGivenReserves = (
   }
   if (type === "Velo") {
     return (amountIn, reserves) => {
+      const sortedReserves = swapReserves(reserves, tokenOutIndex);
       return veloWithdrawSingleSided(
         amountIn,
-        reserves,
+        sortedReserves,
         totalSupply,
         stable,
         extraSettings?.customDecimals
@@ -199,11 +218,12 @@ export const makeSingleSidedWithdrawalGivenReserves = (
   }
 
   if (type === "Curve") {
-    return (amountIn, reserve) => {
+    return (amountIn, reserves) => {
+      const sortedReserves = swapReserves(reserves, tokenOutIndex);
       return curveWithdrawSingleSided(
         amountIn,
-        reserve,
-        0, // TODO: We could refactor everything to use indexIn, out and sort stuff
+        sortedReserves,
+        0, // NOTE: 0 since we swap above
         totalSupply,
         true,
         extraSettings?.customRates,
@@ -215,10 +235,11 @@ export const makeSingleSidedWithdrawalGivenReserves = (
 
   if (type === "Balancer") {
     return (amountIn, reserves) => {
+      const sortedReserves = swapReserves(reserves, tokenOutIndex);
       return balWithdrawSingleSided(
         amountIn,
-        reserves[0], // TODO: Figure out the reserves stuff cause it's pretty sus
-        reserves[1],
+        sortedReserves[0], // TODO: Figure out the reserves stuff cause it's pretty sus
+        sortedReserves[1],
         extraSettings?.customA,
         extraSettings?.customFees,
         extraSettings?.customRates,
@@ -241,7 +262,8 @@ export const makeSingleSidedWithdrawalFunction = (
   reserves: number[],
   stable: boolean,
   totalSupply: number,
-  extraSettings?: ExtraSettings
+  extraSettings?: ExtraSettings,
+  tokenOutIndex = 0
 ) => {
   // hack to bypass the type check
   if (type !== "Velo" && type !== "Curve" && type !== "Balancer") {
@@ -251,7 +273,8 @@ export const makeSingleSidedWithdrawalFunction = (
     type,
     stable,
     totalSupply,
-    extraSettings
+    extraSettings,
+    tokenOutIndex
   );
   const adjusted = (amountIn) => {
     return fn(amountIn, reserves);

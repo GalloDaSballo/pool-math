@@ -130,7 +130,7 @@ export function getAmountOut(
  */
 export function getSingleSidedWithdrawalOut(
   amountIn: number,
-  reserveIn: number,
+  reserveIn: number, // NOTE: These should be called reserve0 and 1 since we always get 0 out
   reserveOut: number,
   amplificationParameter: number = DEFAUT_A,
   swapFeePercentage: number = DEFAUT_FEE,
@@ -146,7 +146,7 @@ export function getSingleSidedWithdrawalOut(
   const out = _calcTokenOutGivenExactBptIn(
     BigNumber(amplificationParameter),
     [BigNumber(reserveIn), BigNumber(reserveOut)],
-    0,
+    0, // NOTE: Hardcoded 0 index, we sort in make
     BigNumber(amountIn),
     BigNumber(totalSupply),
     BigNumber(swapFeePercentage)
