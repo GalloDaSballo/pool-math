@@ -64,19 +64,14 @@ Velodrome
 Alex The Entreprenerd 
 
 
-## TODO
-OPTIMIZER
-// TODO: Test for Pool Time for Recovery
+## Optimizer
 
-// TODO: Test for Liquidity Math
+The optimizer is a set of functions to help you find:
+-> Is a swap profitable
+-> How much more liquidity would you need to support a swap
 
 
-## TODO: 2nd iteration
 
-CURVE
-// TODO: Metastable Pool
+## SingleSided Withdrawals
 
-ALL POOLS
-// Cost of LPing In
-
-// Cost of LPing Out
+See make
