@@ -26,6 +26,43 @@ interface ExtraSettings {
   customDecimals?: number[];
 }
 
+/**
+ * Given reserves and indexes
+ * Return a List such that
+ * @param reserves will be swapped
+ * @param tokenInIndex will be put at 0
+ * @param tokenOutIndex will be put at 1
+ * @returns The extra token (if any) will be put at 2
+ */
+const sortReserves = (
+  reserves: number[],
+  tokenInIndex = 0,
+  tokenOutIndex = 1
+): number[] => {
+  // Skip if already set
+  if (tokenInIndex === 0 && tokenOutIndex === 1) {
+    return reserves;
+  }
+
+  if (tokenInIndex === tokenOutIndex) {
+    throw Error("Same index swap, impossible");
+  }
+
+  // New array with tokenIn, tokenOut
+  const newReserves = [reserves[tokenInIndex], reserves[tokenOutIndex]];
+
+  // If length is 3 let's add last token
+  if (reserves.length > 2) {
+    for (let i = 0; i < reserves.length; i++) {
+      if (i !== tokenInIndex && i !== tokenOutIndex) {
+        newReserves.push(reserves[i]); // Find last one and push at last position
+      }
+    }
+  }
+
+  return newReserves;
+};
+
 const getCurveRates = (length: number, customRates?: number[]): number[] => {
   if (customRates) {
     return customRates;
@@ -40,18 +77,26 @@ const getCurveRates = (length: number, customRates?: number[]): number[] => {
 export const makeAmountOutGivenReservesFunction = (
   type: string,
   stable: boolean,
-  extraSettings?: ExtraSettings
+  extraSettings?: ExtraSettings,
+  tokenInIndex = 0,
+  tokenOutIndex = 1
 ) => {
   // hack to bypass the type check
   if (type !== "Velo" && type !== "Curve" && type !== "Balancer") {
     throw Error("Wrong Type");
   }
+
   if (type === "Velo") {
     return (amountIn, reserves) => {
+      const sortedReserves = sortReserves(
+        reserves,
+        tokenInIndex,
+        tokenOutIndex
+      );
       return veloGetAmountOut(
         amountIn,
-        reserves[0],
-        reserves[1],
+        sortedReserves[0],
+        sortedReserves[1],
         stable,
         extraSettings?.customDecimals
       );
@@ -60,11 +105,16 @@ export const makeAmountOutGivenReservesFunction = (
 
   if (type === "Curve") {
     return (amountIn, reserves) => {
+      const sortedReserves = sortReserves(
+        reserves,
+        tokenInIndex,
+        tokenOutIndex
+      );
       return curveGetAmountOut(
         amountIn,
-        reserves,
+        sortedReserves,
         true,
-        getCurveRates(reserves.length, extraSettings?.customRates),
+        getCurveRates(sortedReserves.length, extraSettings?.customRates),
         extraSettings?.customFees ? extraSettings?.customFees : 1000000, // FEES
         extraSettings?.customA ? extraSettings?.customA : 200000 // A
       );
@@ -73,10 +123,15 @@ export const makeAmountOutGivenReservesFunction = (
 
   if (type === "Balancer") {
     return (amountIn, reserves) => {
+      const sortedReserves = sortReserves(
+        reserves,
+        tokenInIndex,
+        tokenOutIndex
+      );
       return balGetAmountOut(
         amountIn,
-        reserves[0],
-        reserves[1],
+        sortedReserves[0],
+        sortedReserves[1],
         true,
         extraSettings?.customA,
         extraSettings?.customFees,
@@ -92,13 +147,21 @@ export const makeAmountOutFunction = (
   type: string,
   reserves,
   stable,
-  extraSettings?: ExtraSettings
+  extraSettings?: ExtraSettings,
+  tokenInIndex = 0,
+  tokenOutIndex = 1
 ) => {
   // hack to bypass the type check
   if (type !== "Velo" && type !== "Curve" && type !== "Balancer") {
     throw Error("Wrong Type");
   }
-  const fn = makeAmountOutGivenReservesFunction(type, stable, extraSettings);
+  const fn = makeAmountOutGivenReservesFunction(
+    type,
+    stable,
+    extraSettings,
+    tokenInIndex,
+    tokenOutIndex
+  );
   const adjusted = (amountIn) => {
     return fn(amountIn, reserves);
   };
@@ -166,11 +229,11 @@ export const makeSingleSidedWithdrawalGivenReserves = (
 };
 
 export const makeSingleSidedWithdrawalFunctionAfterProvidingReserves = (
-  makeSingleSidedWithdrawalGivenReservesAndTotalSupply,
+  makeSingleSidedWithdrawalGivenReservesFunction,
   reserves
 ) => {
   return (lpAmountIn) =>
-    makeSingleSidedWithdrawalGivenReservesAndTotalSupply(lpAmountIn, reserves);
+    makeSingleSidedWithdrawalGivenReservesFunction(lpAmountIn, reserves);
 };
 
 export const makeSingleSidedWithdrawalFunction = (
