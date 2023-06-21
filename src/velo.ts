@@ -168,7 +168,7 @@ export function withdrawSingleSided(
 
   // Let's swap from 1 to 0
   const totalOneToken = getAmountOut(
-    newBalances[1],
+    balancesOut[1],
     newBalances[0],
     newBalances[1],
     stable,
