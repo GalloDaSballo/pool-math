@@ -22,7 +22,6 @@ function maxInBeforePriceLimitIteration(
     // Stop, found or something
     throw Error("ya ya ya ya ya");
   }
-
   // TODO: Binary search if you want optimal
   let tempMin = min;
   let tempMax = max;
@@ -73,8 +72,12 @@ function maxInBeforePriceLimitIteration(
  * @param getAmountOutFunction
  * @returns
  */
-export function maxInBeforePriceLimit(priceLimit, getAmountOutFunction) {
-  let foundMax = 2 ** 256 - 1;
+export function maxInBeforePriceLimit(
+  priceLimit,
+  getAmountOutFunction,
+  capMax = 2 ** 256 - 1
+) {
+  let foundMax = capMax;
   let foundMin = 0;
   const res = maxInBeforePriceLimitIteration(
     priceLimit,
@@ -145,12 +148,6 @@ export function getPoolReserveMultiplierToAllowPriceImpactBelow(
     } else {
       tempMin = newMultiplier;
     }
-
-    // console.log("priceLimit", priceLimit);
-    // console.log("newPrice", newPrice);
-    // console.log("newMultiplier", newMultiplier);
-    // console.log("tempMax", tempMax);
-    // console.log("tempMin", tempMin);
   }
 
   return tempMax;
@@ -168,7 +165,8 @@ export function getPoolDiscreteRepetitionsUntilFullLiquidatedAmount(
   amountIn, // Total Amount you sell into the Pool
   initialReserves, // Reserves for fn
   getAmountOutGivenReservesFunction, // Fn that given amountIn and Reserves, returns the amount out
-  timeForReplenishmentInSeconds
+  timeForReplenishmentInSeconds,
+  maxForOptimizer = undefined // If you want to reduce max for binary search, necessary for Withdrawals
 ) {
   // Given Pool Reserve
   // And a time for replenishment (where we assume it takes X time to get up to 100%)
@@ -194,7 +192,11 @@ export function getPoolDiscreteRepetitionsUntilFullLiquidatedAmount(
   while (amountLeft > 0) {
     // Get max before price limit (optimizer)
 
-    const limit = maxInBeforePriceLimit(priceLimit, newAmountOutFunction);
+    const limit = maxInBeforePriceLimit(
+      priceLimit,
+      newAmountOutFunction,
+      maxForOptimizer
+    );
 
     if (limit > amountLeft) {
       amountLeft = 0;
@@ -205,7 +207,7 @@ export function getPoolDiscreteRepetitionsUntilFullLiquidatedAmount(
       amountLeft -= limit;
 
       // We need to change the reserves or just compute time until reserves replenish
-      const proportion = limit / newReserves[0];
+      const proportion = limit / newReserves[0]; // NOTE: This may be used in the future for non discrete times
       // This is the percentage of time
 
       // Simulate passing of time
