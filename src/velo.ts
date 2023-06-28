@@ -144,7 +144,7 @@ export function getBurnOut(
   totalSupply: number
 ): number[] {
   const balance0 = reserves[0];
-  const balance1 = reserves[0];
+  const balance1 = reserves[1];
   const liquidity = amountIn; // Liquidity is what we sent to burn
 
   const amount0 = (liquidity * balance0) / totalSupply;
@@ -175,7 +175,8 @@ export function withdrawSingleSided(
     customDecimals
   );
 
-  return totalOneToken;
+  // Total token 0 from withdrawal + from swap
+  return balancesOut[0] + totalOneToken;
 }
 
 // function burn(address to) external lock returns (uint amount0, uint amount1) {
