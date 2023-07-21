@@ -63,6 +63,10 @@ Velodrome
 
 Alex The Entreprenerd 
 
+### Acknowledgements
+
+Ray Easter for Balancer Volatile Math being ported
+
 
 ## Optimizer
 
