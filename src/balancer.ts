@@ -1,5 +1,6 @@
 import { BigNumber } from "bignumber.js";
 import { _calcOutGivenIn, _calcTokenOutGivenExactBptIn } from "./bal/bal-math";
+import { _calcOutGivenIn as _weightedOutGivenIn, _calcTokenOutGivenExactBptIn as _weightedTokenOutGivenExactBptIn } from "./bal/weighted/weighted-math";
 
 // NOTE: This is for stable math
 
@@ -23,15 +24,12 @@ function getAmountOutInternal(
   amountIn,
   reserveIn,
   reserveOut,
-  stable,
+  weightIn,
+  weightOut,
   amplificationParameter, // BN
   swapFeePercentage, // BN
   tokenInDecimals
 ): number {
-  if (stable !== true) {
-    throw Error("Not implemented, balancer is only for stable");
-  }
-
   const tokenBalances = [BigNumber(reserveIn), BigNumber(reserveOut)]; // BN
   const tokenIndexIn = 0;
   const tokenIndexOut = 1;
@@ -44,14 +42,27 @@ function getAmountOutInternal(
   };
 
   // amplification parameter
-  const out = _calcOutGivenIn(
-    BigNumber(amplificationParameter), // A from curve
-    tokenBalances, // Index in (prob 0) // TODO: See if rates are used to influence balances, if they are we adjust here and take the precision loss
-    tokenIndexIn, //       this._tokens.map((t) => this._upScale(t.balance, t.decimals)),
-    tokenIndexOut,
-    BigNumber(tokenAmountIn), //       this._upScale(amountIn, tokenIn.decimals),
-    options
-  );
+  let _stablePool = (weightIn == 0 && weightOut == 0)? true : false;
+  let out;
+  if (_stablePool){
+    out = _calcOutGivenIn(
+             BigNumber(amplificationParameter), // A from curve
+             tokenBalances, // Index in (prob 0) // TODO: See if rates are used to influence balances, if they are we adjust here and take the precision loss
+             tokenIndexIn, // this._tokens.map((t) => this._upScale(t.balance, t.decimals)),
+             tokenIndexOut,
+             BigNumber(tokenAmountIn), // this._upScale(amountIn, tokenIn.decimals),
+             options
+    );
+  }else {
+    out = _weightedOutGivenIn(
+             BigNumber(reserveIn),
+             BigNumber(weightIn),
+             BigNumber(reserveOut),
+             BigNumber(weightOut),
+             BigNumber(tokenAmountIn),
+             options
+    );
+  }
 
   return parseInt(out.toString(), 10);
 }
@@ -106,6 +117,23 @@ export function getAmountOut(
   tokenInDecimals: number = DEFAULT_TOKEN_DECIMALS,
   customRates: number[] = [1e18, 1e18]
 ) {
+  
+  if (stable !== true) {
+    // get weighted pool output
+    // we use customRates as token weights for weighted pool
+    return Math.floor(
+            getAmountOutInternal(
+                  amountIn,
+                  reserveIn,
+                  reserveOut,
+                  customRates[0], customRates[1],
+                  amplificationParameter,
+                  swapFeePercentage,
+                  tokenInDecimals
+            )
+    );  
+  } 
+  
   if (customRates[0] != 1e18 || customRates[1] != 1e18) {
     amountIn = (amountIn * customRates[0]) / 1e18;
     reserveIn = (reserveIn * customRates[0]) / 1e18;
@@ -117,7 +145,7 @@ export function getAmountOut(
       amountIn,
       reserveIn,
       reserveOut,
-      stable,
+      0, 0,
       amplificationParameter,
       swapFeePercentage,
       tokenInDecimals
@@ -126,7 +154,7 @@ export function getAmountOut(
 }
 
 /**
- * Given params returns the amount of single token you'd get if performing a once sided withdrawal
+ * Given params returns the amount of single token you'd get if performing a single-sided withdrawal
  */
 export function getSingleSidedWithdrawalOut(
   amountIn: number,
@@ -135,8 +163,23 @@ export function getSingleSidedWithdrawalOut(
   amplificationParameter: number = DEFAUT_A,
   swapFeePercentage: number = DEFAUT_FEE,
   customRates: number[] = [1e18, 1e18],
-  totalSupply: number
-): number {
+  totalSupply: number,
+  stable
+): number {	
+  
+  if (stable !== true) {
+    // get weighted pool output
+    // we use customRates as token weights for weighted pool
+    const out = _weightedTokenOutGivenExactBptIn(
+                     BigNumber(reserveIn),
+                     BigNumber(customRates[0]),
+                     BigNumber(amountIn),
+                     BigNumber(totalSupply),
+                     BigNumber(swapFeePercentage)
+    );
+    return parseInt(out.toString(), 10);  
+  }
+  
   if (customRates[0] != 1e18 || customRates[1] != 1e18) {
     amountIn = (amountIn * customRates[0]) / 1e18;
     reserveIn = (reserveIn * customRates[0]) / 1e18;

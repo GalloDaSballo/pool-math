@@ -150,7 +150,7 @@ export const makeAmountOutGivenReservesFunction = (
         amountIn,
         sortedReserves[0],
         sortedReserves[1],
-        true,
+        stable,
         extraSettings?.customA,
         extraSettings?.customFees,
         extraSettings?.customDecimals?.[0], // Balancer only looks at amt in
@@ -243,7 +243,8 @@ export const makeSingleSidedWithdrawalGivenReserves = (
         extraSettings?.customA,
         extraSettings?.customFees,
         extraSettings?.customRates,
-        totalSupply
+        totalSupply,
+        stable
       );
     };
   }
