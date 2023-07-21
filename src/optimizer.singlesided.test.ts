@@ -166,13 +166,6 @@ describe("Optimizer Single Sided for Velo volatile", () => {
       0,
       TOTAL_SUPPLY
     );
-
-    // The more you withdraw, the more you receive
-
-    // If you withdraw too much, you lose value
-    // TODO: WRITE PROPER TEST
-    console.log("velo result", result);
-    console.log("Velo result as % total suply", result.sellUpTo / TOTAL_SUPPLY);
   });
 });
 
@@ -205,11 +198,6 @@ describe("Optimizer Single Sided for Curve Stable", () => {
       0,
       TOTAL_SUPPLY
     );
-    console.log("curve result", result);
-    console.log(
-      "curve result as % total suply",
-      result.sellUpTo / TOTAL_SUPPLY
-    );
   });
 });
 
@@ -238,8 +226,5 @@ describe("Optimizer Single Sided for Balancer Stable", () => {
       0,
       TOTAL_SUPPLY
     );
-
-    console.log("bal result", result);
-    console.log("bal result as % total suply", result.sellUpTo / TOTAL_SUPPLY);
   });
 });

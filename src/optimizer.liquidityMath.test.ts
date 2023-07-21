@@ -134,7 +134,6 @@ describe("Find Min Multiplier Necessary to allow Price Impact to be below %", ()
     expect(driftedPrice).toBeGreaterThan(PRICE_AFTER_IMPACT_TO_FIND);
   });
 
-  // TODO: Same stuff but for Curve and Bal
   it("If swap is not profitable BAL", () => {
     // Data from 0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080
     const wstETH_RES = 3.6998514304359667e22;
@@ -144,7 +143,7 @@ describe("Find Min Multiplier Necessary to allow Price Impact to be below %", ()
 
     const getAmountBalGivenReserve = makeAmountOutGivenReservesFunction(
       "Balancer",
-      false,
+      true, // Needs to be stable
       {
         customRates: [1125573684330119600, 1000000000000000000],
         customA: 50000,
